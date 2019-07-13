@@ -17,6 +17,7 @@ use Monorepo\Composer\MonorepoInstalledRepository;
 use Monorepo\Composer\MonorepoInstaller;
 use Monorepo\Composer\EventDispatcher;
 use Monorepo\Composer\AutoloadGenerator;
+use Monorepo\Utils\FileUtils;
 use Symfony\Component\Finder\Finder;
 use Composer\Installer\InstallationManager;
 use Composer\IO\IOInterface;
@@ -82,7 +83,7 @@ class Build
             $this->resolvePackageDependencies($localRepo, $packages, $packageName, $vendorDir, $context->isNoDevMode());
 
             $composerConfig = new Config(true, $context->getRootDirectory());
-            $composerConfig->merge(array('config' => array('vendor-dir' => $config['path']. '/vendor')));
+            $composerConfig->merge(array('config' => array('vendor-dir' => FileUtils::join_paths($config['path'], 'vendor'))));
             $generator->dump(
                 $composerConfig,
                 $localRepo,
@@ -92,25 +93,25 @@ class Build
                 $context->isOptimize()
             );
 
-            $binDir = $context->getRootDirectory() . '/' . $config['path'] . '/vendor/bin';
+            $binDir = FileUtils::join_paths($context->getRootDirectory() , $config['path'] , 'vendor','bin');
 
             if (! is_dir($binDir)) {
                 mkdir($binDir, 0755, true);
             }
 
             // remove old symlinks
-            array_map('unlink', glob($binDir . '/*'));
+            FileUtils::remove_files(glob(FileUtils::join_paths($binDir,'*')));
 
             foreach ($localRepo->getPackages() as $package) {
                 foreach ($package->getBinaries() as $binary) {
-                    $binFile = $binDir . '/' . basename($binary);
+                    $binFile = FileUtils::join_paths($binDir , basename($binary));
 
-                    if (file_exists($binFile)) {
+                    if (FileUtils::file_exists($binFile)) {
                         $this->io->write(sprintf('Skipped installation of ' . $binFile . ' for package ' . $packageName . ': name conflicts with an existing file'));
                         continue;
                     }
 
-                    $fsUtil->relativeSymlink($context->getRootDirectory() . '/' . $binary, $binFile);
+                    $fsUtil->relativeSymlink(FileUtils::join_paths($context->getRootDirectory() , $binary), $binFile);
                 }
             }
         }
@@ -221,7 +222,7 @@ class Build
             $packages[$file->getRelativePath()] = $monorepoJson;
         }
 
-        $installedJsonFile = $rootDirectory . '/' . $vendorDir . '/composer/installed.json';
+        $installedJsonFile = FileUtils::join_paths($rootDirectory , $vendorDir , 'composer','installed.json');
         if (file_exists($installedJsonFile)) {
             $installed = json_decode(file_get_contents($installedJsonFile), true);
 
@@ -233,7 +234,7 @@ class Build
                 $name = $composerJson['name'];
 
                 $monorepoedComposerJson = array(
-                    'path' => $vendorDir . '/' . $name,
+                    'path' => FileUtils::join_paths($vendorDir , $name),
                     'autoload' => array(),
                     'include-path' => array(),
                     'deps' => array(),
@@ -263,7 +264,7 @@ class Build
 
                 if (isset($composerJson['bin'])) {
                     foreach ($composerJson['bin'] as $binary) {
-                        $binary = $vendorDir . '/' . $composerJson['name'] . '/' . $binary;
+                        $binary = FileUtils::join_paths($vendorDir , $composerJson['name'] , $binary);
                         if (! in_array($binary, $monorepoedComposerJson['bin'])) {
                             $monorepoedComposerJson['bin'][] = $binary;
                         }
@@ -291,7 +292,7 @@ class Build
 
     private function loadMonorepoJson($contents, $path)
     {
-        $schema = json_decode(file_get_contents(__DIR__ . '/../../resources/monorepo-schema.json'));
+        $schema = json_decode(FileUtils::read_file(__DIR__,'..','..','resources','monorepo-schema.json'));
         $data = json_decode($contents);
 
         // Validate
@@ -315,7 +316,8 @@ class Build
      */
     private function loadBaseConfig($context) {
         $composerFactory = new Factory();
-        $localConfigPath = file_exists($context->getRootDirectory() . '/composer.json') ? $context->getRootDirectory() . '/composer.json' : null;
+        $file = FileUtils::join_paths($context->getRootDirectory(),'composer.json');
+        $localConfigPath = FileUtils::file_exists($file) ? $file : null;
         return $composerFactory->createComposer($this->io, $localConfigPath)->getConfig();
     }
 
