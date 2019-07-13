@@ -2,6 +2,7 @@
 
 namespace Monorepo\Command;
 
+use Monorepo\ContextBuilder;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputInterface;
@@ -36,8 +37,12 @@ class GitChangedCommand extends BaseCommand
 
         exec('git diff --name-only ' . escapeshellarg($range), $result);
 
-        $build = new Build(new ConsoleIO($input, $output, $this->getHelperSet()));
-        $this->packages = $build->loadPackages(getcwd());
+        $context = ContextBuilder::create()
+            ->withIo(new ConsoleIO($input, $output, $this->getHelperSet()))
+            ->build(getcwd());
+
+        $build = new Build();
+        $this->packages = $build->loadPackages($context);
 
         $changePackageName = rtrim($input->getArgument('package'), '/');
 

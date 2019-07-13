@@ -7,6 +7,7 @@ use Composer\Composer;
 use Composer\IO\IOInterface;
 use Composer\Script\Event;
 use Monorepo\Context;
+use Monorepo\ContextBuilder;
 
 class PluginTest extends \PHPUnit_Framework_TestCase
 {
@@ -27,6 +28,7 @@ class PluginTest extends \PHPUnit_Framework_TestCase
         $plugin = new Plugin($build);
         $plugin->generateMonorepoAutoloads($event);
 
-        \Phake::verify($build)->build(new Context(getcwd(), false, true));
+        $context = ContextBuilder::create()->build(getcwd(), false, true);
+        \Phake::verify($build)->build($context);
     }
 }

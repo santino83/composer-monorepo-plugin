@@ -9,6 +9,10 @@
 namespace Monorepo;
 
 
+use Composer\Installer\InstallationManager;
+use Composer\IO\IOInterface;
+use Monorepo\Composer\AutoloadGenerator;
+
 class Context
 {
     /**
@@ -28,6 +32,21 @@ class Context
      * @var bool
      */
     private $noDevMode = false;
+
+    /**
+     * @var IOInterface
+     */
+    private $io;
+
+    /**
+     * @var AutoloadGenerator
+     */
+    private $generator;
+
+    /**
+     * @var InstallationManager
+     */
+    private $installationManager;
 
     /**
      * Context constructor.
@@ -64,6 +83,60 @@ class Context
     public function isNoDevMode()
     {
         return $this->noDevMode;
+    }
+
+    /**
+     * @return IOInterface
+     */
+    public function getIo()
+    {
+        return $this->io;
+    }
+
+    /**
+     * @param IOInterface $io
+     * @return Context
+     */
+    public function setIo($io)
+    {
+        $this->io = $io;
+        return $this;
+    }
+
+    /**
+     * @return AutoloadGenerator
+     */
+    public function getGenerator()
+    {
+        return $this->generator;
+    }
+
+    /**
+     * @param AutoloadGenerator $generator
+     * @return Context
+     */
+    public function setGenerator($generator)
+    {
+        $this->generator = $generator;
+        return $this;
+    }
+
+    /**
+     * @return InstallationManager
+     */
+    public function getInstallationManager()
+    {
+        return $this->installationManager;
+    }
+
+    /**
+     * @param InstallationManager $installationManager
+     * @return Context
+     */
+    public function setInstallationManager($installationManager)
+    {
+        $this->installationManager = $installationManager;
+        return $this;
     }
 
 }

@@ -11,6 +11,7 @@ use Composer\EventDispatcher\EventSubscriberInterface;
 use Composer\Plugin\Capable;
 use Composer\Plugin\Capability\CommandProvider;
 use Monorepo\Context;
+use Monorepo\ContextBuilder;
 
 class Plugin implements PluginInterface, EventSubscriberInterface, Capable
 {
@@ -19,6 +20,11 @@ class Plugin implements PluginInterface, EventSubscriberInterface, Capable
      */
     private $build;
 
+    /**
+     * @var IOInterface
+     */
+    private $io;
+
     public function __construct(Build $build = null)
     {
         $this->build = $build;
@@ -26,7 +32,8 @@ class Plugin implements PluginInterface, EventSubscriberInterface, Capable
 
     public function activate(Composer $composer, IOInterface $io)
     {
-        $this->build = $this->build ?: new Build($io);
+        $this->build = $this->build ?: new Build();
+        $this->io = $io;
     }
 
     public static function getSubscribedEvents()
@@ -44,7 +51,9 @@ class Plugin implements PluginInterface, EventSubscriberInterface, Capable
         $flags = $event->getFlags();
         $optimize = isset($flags['optimize']) ? $flags['optimize'] : false;
 
-        $context = new Context(getcwd(), $optimize, !$event->isDevMode());
+        $context = ContextBuilder::create()
+            ->withIo($this->io)
+            ->build(getcwd(), $optimize, !$event->isDevMode());
 
         $this->build->build($context);
     }

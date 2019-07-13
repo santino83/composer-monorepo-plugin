@@ -3,6 +3,7 @@
 namespace Monorepo\Command;
 
 use Monorepo\Context;
+use Monorepo\ContextBuilder;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputInterface;
@@ -30,9 +31,11 @@ class BuildCommand extends BaseCommand
         $noDevMode = (bool)$input->getOption('no-dev');
         $optimize = (bool)$input->getOption('optimize-autoloader');
 
-        $context = new Context(getcwd(), $optimize, $noDevMode);
+        $context = ContextBuilder::create()
+            ->withIo(new ConsoleIO($input, $output, $this->getHelperSet()))
+            ->build(getcwd(), $optimize, $noDevMode);
 
-        $build = new Build(new ConsoleIO($input, $output, $this->getHelperSet()));
+        $build = new Build();
         $build->build($context);
     }
 }

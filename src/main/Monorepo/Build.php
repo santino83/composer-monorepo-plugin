@@ -14,16 +14,10 @@
 namespace Monorepo;
 
 use Monorepo\Composer\MonorepoInstalledRepository;
-use Monorepo\Composer\MonorepoInstaller;
-use Monorepo\Composer\EventDispatcher;
-use Monorepo\Composer\AutoloadGenerator;
 use Monorepo\Utils\FileUtils;
 use Symfony\Component\Finder\Finder;
-use Composer\Installer\InstallationManager;
 use Composer\IO\IOInterface;
-use Composer\IO\NullIO;
 use Composer\Config;
-use Composer\Composer;
 use Composer\Factory;
 use Composer\Package\Package;
 use Composer\Util\Filesystem;
@@ -38,18 +32,19 @@ use Composer\Util\Filesystem;
  */
 class Build
 {
-    private $io;
 
-    public function __construct(IOInterface $io = null)
-    {
-        $this->io = $io ?: new NullIO();
-    }
+    /**
+     * @var IOInterface
+     */
+    private $io;
 
     /**
      * @param Context $context
      */
     public function build($context)
     {
+        $this->io = $context->getIo();
+
         $this->io->write(sprintf('<info>Generating autoload files for monorepo sub-packages %s dev-dependencies.</info>', $context->isNoDevMode() ? 'without' : 'with'));
         $start = microtime(true);
 
@@ -58,11 +53,8 @@ class Build
 
         $packages = $this->loadPackages($context, $baseConfig);
 
-        $evm = new EventDispatcher(new Composer(), $this->io);
-        $generator = new AutoloadGenerator($evm, $this->io);
-        $generator->setDevMode(!$context->isNoDevMode());
-        $installationManager = new InstallationManager();
-        $installationManager->addInstaller(new MonorepoInstaller());
+        $generator = $context->getGenerator();
+        $installationManager = $context->getInstallationManager();
 
         $fsUtil = new Filesystem();
 
@@ -318,7 +310,7 @@ class Build
         $composerFactory = new Factory();
         $file = FileUtils::join_paths($context->getRootDirectory(),'composer.json');
         $localConfigPath = FileUtils::file_exists($file) ? $file : null;
-        return $composerFactory->createComposer($this->io, $localConfigPath)->getConfig();
+        return $composerFactory->createComposer($context->getIo(), $localConfigPath)->getConfig();
     }
 
 }
