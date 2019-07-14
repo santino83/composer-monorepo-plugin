@@ -1,5 +1,5 @@
 {
-    "name": "beberlei/composer-monorepo-plugin",
+    "name": "santino83/composer-monorepo-plugin",
     "license": "MIT",
     "type": "composer-plugin",
     "require": {

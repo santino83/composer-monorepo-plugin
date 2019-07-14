@@ -1,3 +1,6 @@
+    This project has been forked from https://github.com/beberlei/composer-monorepo-plugin. 
+    I took the beberlei's idea and start adding my vision to this tool
+
 # Composer Monorepo Plugin
 
     Note: this project is still experimental. Please provide feedback!
