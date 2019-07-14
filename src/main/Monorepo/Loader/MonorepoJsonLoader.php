@@ -62,7 +62,7 @@ class MonorepoJsonLoader
             }
 
             return array_merge([
-                'path' => '',
+                'name' => '',
                 'autoload' => [],
                 'autoload-dev' => [],
                 'deps' => [],
