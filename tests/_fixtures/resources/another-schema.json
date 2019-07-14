@@ -1,0 +1,15 @@
+{
+    "name": "Another Schema Package",
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+        "foo": {
+            "type": "array",
+            "items": {"type": "string", "description": "foo names with their unique value"}
+        },
+        "bar": {
+            "type": "array",
+            "items": {"type": "string", "description": "bar names with their unique value"}
+        }
+    }
+}

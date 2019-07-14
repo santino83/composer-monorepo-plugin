@@ -14,6 +14,7 @@
 namespace Monorepo;
 
 use Monorepo\Composer\MonorepoInstalledRepository;
+use Monorepo\Loader\MonorepoJsonLoader;
 use Monorepo\Utils\FileUtils;
 use Symfony\Component\Finder\Finder;
 use Composer\IO\IOInterface;
@@ -37,6 +38,20 @@ class Build
      * @var IOInterface
      */
     private $io;
+
+    /**
+     * @var MonorepoJsonLoader
+     */
+    private $monorepoLoader;
+
+    /**
+     * Build constructor.
+     * @param MonorepoJsonLoader $monorepoLoader
+     */
+    public function __construct($monorepoLoader = null)
+    {
+        $this->monorepoLoader = $monorepoLoader ? $monorepoLoader : new MonorepoJsonLoader();
+    }
 
     /**
      * @param Context $context
@@ -187,10 +202,11 @@ class Build
         $packages = array();
 
         foreach ($finder as $file) {
-            $monorepoJson = $this->loadMonorepoJson($file->getContents(), $file->getPath());
 
-            if ($monorepoJson === NULL) {
-                throw new \RuntimeException("Invalid " . $file->getRelativePath() . '/monorepo.json file.');
+            try{
+                $monorepoJson = $this->monorepoLoader->fromJson($file->getContents());
+            }catch (\Exception $ex){
+                throw new \RuntimeException("Invalid " . $file->getRelativePath() . '/monorepo.json file:'."\n".$ex->getMessage());
             }
 
             $monorepoJson['path'] = $file->getRelativePath();
@@ -280,26 +296,6 @@ class Build
         }
 
         return $packages;
-    }
-
-    private function loadMonorepoJson($contents, $path)
-    {
-        $schema = json_decode(FileUtils::read_file(__DIR__,'..','..','resources','monorepo-schema.json'));
-        $data = json_decode($contents);
-
-        // Validate
-        $validator = new \JsonSchema\Validator();
-        $validator->check($data, $schema);
-
-        if (!$validator->isValid()) {
-            $errors = array();
-            foreach ($validator->getErrors() as $error) {
-                $errors[] = sprintf("[%s] %s\n", $error['property'], $error['message']);
-            }
-            throw new \RuntimeException(sprintf("JSON is not valid in %s\n%s", $path, implode("\n", $errors)));
-        }
-
-        return json_decode($contents, true);
     }
 
     /**
