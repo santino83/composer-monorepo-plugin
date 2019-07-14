@@ -14,6 +14,7 @@
 namespace Monorepo;
 
 use Monorepo\Composer\MonorepoInstalledRepository;
+use Monorepo\Loader\ComposerConfigLoader;
 use Monorepo\Loader\MonorepoJsonLoader;
 use Monorepo\Utils\FileUtils;
 use Symfony\Component\Finder\Finder;
@@ -45,12 +46,19 @@ class Build
     private $monorepoLoader;
 
     /**
-     * Build constructor.
-     * @param MonorepoJsonLoader $monorepoLoader
+     * @var ComposerConfigLoader
      */
-    public function __construct($monorepoLoader = null)
+    private $configLoader;
+
+    /**
+     * Build constructor.
+     * @param MonorepoJsonLoader|null $monorepoLoader
+     * @param ComposerConfigLoader|null $configLoader
+     */
+    public function __construct($monorepoLoader = null, $configLoader = null)
     {
         $this->monorepoLoader = $monorepoLoader ? $monorepoLoader : new MonorepoJsonLoader();
+        $this->configLoader = $configLoader ? $configLoader : new ComposerConfigLoader();
     }
 
     /**
@@ -63,7 +71,7 @@ class Build
         $this->io->write(sprintf('<info>Generating autoload files for monorepo sub-packages %s dev-dependencies.</info>', $context->isNoDevMode() ? 'without' : 'with'));
         $start = microtime(true);
 
-        $baseConfig = $this->loadBaseConfig($context);
+        $baseConfig = $this->configLoader->load(FileUtils::join_paths($context->getRootDirectory(),'composer.json'), $context->getIo());
         $vendorDir = $baseConfig->get('vendor-dir', Config::RELATIVE_PATHS);
 
         $packages = $this->loadPackages($context, $baseConfig);
@@ -188,7 +196,7 @@ class Build
         $rootDirectory = $context->getRootDirectory();
 
         if ($baseConfig == null) {
-            $baseConfig = $this->loadBaseConfig($context);
+            $baseConfig = $this->configLoader->load(FileUtils::join_paths($context->getRootDirectory(),'composer.json'), $context->getIo());
         }
         $vendorDir = $baseConfig->get('vendor-dir', Config::RELATIVE_PATHS);
 
@@ -296,17 +304,6 @@ class Build
         }
 
         return $packages;
-    }
-
-    /**
-     * @param Context $context
-     * @return Config
-     */
-    private function loadBaseConfig($context) {
-        $composerFactory = new Factory();
-        $file = FileUtils::join_paths($context->getRootDirectory(),'composer.json');
-        $localConfigPath = FileUtils::file_exists($file) ? $file : null;
-        return $composerFactory->createComposer($context->getIo(), $localConfigPath)->getConfig();
     }
 
 }
