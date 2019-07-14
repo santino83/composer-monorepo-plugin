@@ -10,7 +10,6 @@ namespace Monorepo\Schema;
 
 
 use JsonSchema\Validator;
-use Monorepo\Utils\FileUtils;
 
 class SchemaValidator
 {
@@ -28,7 +27,8 @@ class SchemaValidator
      */
     public function __construct($schema = null)
     {
-        $this->schema = $schema ? $schema : json_decode(FileUtils::read_file(__DIR__,'..','..','..','resources','monorepo-schema.json'));
+        $schemaPath = [__DIR__,'..','..','..','resources','monorepo-schema.json'];
+        $this->schema = $schema ? $schema : json_decode(file_get_contents(implode(DIRECTORY_SEPARATOR, $schemaPath)));
         $this->validator = new Validator();
     }
 

@@ -10,7 +10,6 @@ namespace Monorepo\Loader;
 
 
 use Monorepo\Schema\SchemaValidator;
-use Monorepo\Utils\FileUtils;
 
 class MonorepoJsonLoader
 {
@@ -37,7 +36,7 @@ class MonorepoJsonLoader
     public function fromFile($file)
     {
         try{
-            $content = FileUtils::read_file($file);
+            $content = file_get_contents($file);
             return $this->fromJson($content);
         }catch (\Exception $ex){
             throw new \RuntimeException(sprintf("Unable to parse %s : \n%s", $file, $ex->getMessage()));

@@ -13,7 +13,6 @@ use Composer\Config;
 use Composer\Factory;
 use Composer\IO\IOInterface;
 use Composer\IO\NullIO;
-use Monorepo\Utils\FileUtils;
 
 class ComposerConfigLoader
 {
@@ -25,7 +24,7 @@ class ComposerConfigLoader
 
     /**
      * ComposerConfigLoader constructor.
-     * @param Factory $factory
+     * @param Factory|null $factory
      */
     public function __construct($factory = null)
     {
@@ -39,7 +38,7 @@ class ComposerConfigLoader
      */
     public function load($path = null, $io = null)
     {
-        $localConfigPath = FileUtils::file_exists($path) ? $path : null;
+        $localConfigPath = file_exists($path) ? $path : null;
         $_io = $io ? $io : new NullIO();
 
         return $this->factory->createComposer($_io, $localConfigPath)->getConfig();

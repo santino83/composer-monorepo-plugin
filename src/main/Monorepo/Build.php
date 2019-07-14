@@ -14,15 +14,14 @@
 namespace Monorepo;
 
 use Monorepo\Composer\MonorepoInstalledRepository;
+use Monorepo\Composer\Util\Filesystem;
 use Monorepo\Loader\ComposerConfigLoader;
 use Monorepo\Loader\MonorepoJsonLoader;
-use Monorepo\Utils\FileUtils;
 use Symfony\Component\Finder\Finder;
 use Composer\IO\IOInterface;
 use Composer\Config;
 use Composer\Factory;
 use Composer\Package\Package;
-use Composer\Util\Filesystem;
 
 /**
  * Scan project for monorepo.json files, indicating components, "building" them.
@@ -51,14 +50,21 @@ class Build
     private $configLoader;
 
     /**
+     * @var Filesystem
+     */
+    private $fs;
+
+    /**
      * Build constructor.
      * @param MonorepoJsonLoader|null $monorepoLoader
      * @param ComposerConfigLoader|null $configLoader
+     * @param Filesystem|null $fs
      */
-    public function __construct($monorepoLoader = null, $configLoader = null)
+    public function __construct($monorepoLoader = null, $configLoader = null, $fs = null)
     {
         $this->monorepoLoader = $monorepoLoader ? $monorepoLoader : new MonorepoJsonLoader();
         $this->configLoader = $configLoader ? $configLoader : new ComposerConfigLoader();
+        $this->fs = $fs ? $fs : new Filesystem();
     }
 
     /**
@@ -71,15 +77,13 @@ class Build
         $this->io->write(sprintf('<info>Generating autoload files for monorepo sub-packages %s dev-dependencies.</info>', $context->isNoDevMode() ? 'without' : 'with'));
         $start = microtime(true);
 
-        $baseConfig = $this->configLoader->load(FileUtils::join_paths($context->getRootDirectory(),'composer.json'), $context->getIo());
+        $baseConfig = $this->configLoader->load($this->fs->path($context->getRootDirectory(),'composer.json'), $context->getIo());
         $vendorDir = $baseConfig->get('vendor-dir', Config::RELATIVE_PATHS);
 
         $packages = $this->loadPackages($context, $baseConfig);
 
         $generator = $context->getGenerator();
         $installationManager = $context->getInstallationManager();
-
-        $fsUtil = new Filesystem();
 
         foreach ($packages as $packageName => $config) {
             if (strpos($packageName, $vendorDir) === 0) {
@@ -98,7 +102,7 @@ class Build
             $this->resolvePackageDependencies($localRepo, $packages, $packageName, $vendorDir, $context->isNoDevMode());
 
             $composerConfig = new Config(true, $context->getRootDirectory());
-            $composerConfig->merge(array('config' => array('vendor-dir' => FileUtils::join_paths($config['path'], 'vendor'))));
+            $composerConfig->merge(array('config' => array('vendor-dir' => $this->fs->path($config['path'], 'vendor'))));
             $generator->dump(
                 $composerConfig,
                 $localRepo,
@@ -108,25 +112,25 @@ class Build
                 $context->isOptimize()
             );
 
-            $binDir = FileUtils::join_paths($context->getRootDirectory() , $config['path'] , 'vendor','bin');
+            $binDir = $this->fs->path($context->getRootDirectory() , $config['path'] , 'vendor','bin');
 
             if (! is_dir($binDir)) {
                 mkdir($binDir, 0755, true);
             }
 
             // remove old symlinks
-            FileUtils::remove_files(glob(FileUtils::join_paths($binDir,'*')));
+            array_map('unlink', glob($this->fs->path($binDir,'*')));
 
             foreach ($localRepo->getPackages() as $package) {
                 foreach ($package->getBinaries() as $binary) {
-                    $binFile = FileUtils::join_paths($binDir , basename($binary));
+                    $binFile = $this->fs->path($binDir , basename($binary));
 
-                    if (FileUtils::file_exists($binFile)) {
+                    if (file_exists($binFile)) {
                         $this->io->write(sprintf('Skipped installation of ' . $binFile . ' for package ' . $packageName . ': name conflicts with an existing file'));
                         continue;
                     }
 
-                    $fsUtil->relativeSymlink(FileUtils::join_paths($context->getRootDirectory() , $binary), $binFile);
+                    $this->fs->relativeSymlink($this->fs->path($context->getRootDirectory() , $binary), $binFile);
                 }
             }
         }
@@ -196,7 +200,7 @@ class Build
         $rootDirectory = $context->getRootDirectory();
 
         if ($baseConfig == null) {
-            $baseConfig = $this->configLoader->load(FileUtils::join_paths($context->getRootDirectory(),'composer.json'), $context->getIo());
+            $baseConfig = $this->configLoader->load($this->fs->path($context->getRootDirectory(),'composer.json'), $context->getIo());
         }
         $vendorDir = $baseConfig->get('vendor-dir', Config::RELATIVE_PATHS);
 
@@ -238,7 +242,7 @@ class Build
             $packages[$file->getRelativePath()] = $monorepoJson;
         }
 
-        $installedJsonFile = FileUtils::join_paths($rootDirectory , $vendorDir , 'composer','installed.json');
+        $installedJsonFile = $this->fs->path($rootDirectory , $vendorDir , 'composer','installed.json');
         if (file_exists($installedJsonFile)) {
             $installed = json_decode(file_get_contents($installedJsonFile), true);
 
@@ -250,7 +254,7 @@ class Build
                 $name = $composerJson['name'];
 
                 $monorepoedComposerJson = array(
-                    'path' => FileUtils::join_paths($vendorDir , $name),
+                    'path' => $this->fs->path($vendorDir , $name),
                     'autoload' => array(),
                     'include-path' => array(),
                     'deps' => array(),
@@ -280,7 +284,7 @@ class Build
 
                 if (isset($composerJson['bin'])) {
                     foreach ($composerJson['bin'] as $binary) {
-                        $binary = FileUtils::join_paths($vendorDir , $composerJson['name'] , $binary);
+                        $binary = $this->fs->path($vendorDir , $composerJson['name'] , $binary);
                         if (! in_array($binary, $monorepoedComposerJson['bin'])) {
                             $monorepoedComposerJson['bin'][] = $binary;
                         }
