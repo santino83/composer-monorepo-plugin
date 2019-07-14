@@ -61,7 +61,15 @@ class MonorepoJsonLoader
                 throw new \RuntimeException("Unable to parse given monorepo json");
             }
 
-            return $monorepoJson;
+            return array_merge([
+                'path' => '',
+                'autoload' => [],
+                'autoload-dev' => [],
+                'deps' => [],
+                'deps-dev' => [],
+                'include-path' => [],
+                'bin' => []
+            ],$monorepoJson);
         }
     }
 

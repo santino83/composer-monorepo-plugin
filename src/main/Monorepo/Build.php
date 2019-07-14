@@ -222,23 +222,6 @@ class Build
             }
 
             $monorepoJson['path'] = $file->getRelativePath();
-
-            if (!isset($monorepoJson['autoload'])) {
-                $monorepoJson['autoload'] = array();
-            }
-            if (!isset($monorepoJson['autoload-dev'])) {
-                $monorepoJson['autoload-dev'] = array();
-            }
-            if (!isset($monorepoJson['deps'])) {
-                $monorepoJson['deps'] = array();
-            }
-            if (!isset($monorepoJson['deps-dev'])) {
-                $monorepoJson['deps-dev'] = array();
-            }
-            if (!isset($monorepoJson['include-path'])) {
-                $monorepoJson['include-path'] = array();
-            }
-
             $packages[$file->getRelativePath()] = $monorepoJson;
         }
 
