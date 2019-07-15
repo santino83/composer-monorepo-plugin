@@ -9,6 +9,7 @@
 namespace Monorepo\Command;
 
 
+use Composer\IO\ConsoleIO;
 use Monorepo\ContextBuilder;
 use Monorepo\Console;
 use Symfony\Component\Console\Input\InputInterface;
@@ -30,7 +31,9 @@ class InitCommand extends BaseCommand
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $context = ContextBuilder::create()->build(getcwd());
+        $context = ContextBuilder::create()
+            ->withIo(new ConsoleIO($input, $output, $this->getHelperSet()))
+            ->build(getcwd());
 
         $console = new Console();
         $console->init($context);
