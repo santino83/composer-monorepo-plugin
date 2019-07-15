@@ -12,6 +12,7 @@ namespace Monorepo;
 use Composer\Installer\InstallationManager;
 use Composer\IO\IOInterface;
 use Monorepo\Composer\AutoloadGenerator;
+use Monorepo\Composer\Util\Filesystem;
 
 class Context
 {
@@ -47,6 +48,11 @@ class Context
      * @var InstallationManager
      */
     private $installationManager;
+
+    /**
+     * @var Filesystem
+     */
+    private $filesystem;
 
     /**
      * Context constructor.
@@ -136,6 +142,24 @@ class Context
     public function setInstallationManager($installationManager)
     {
         $this->installationManager = $installationManager;
+        return $this;
+    }
+
+    /**
+     * @return Filesystem
+     */
+    public function getFilesystem()
+    {
+        return $this->filesystem;
+    }
+
+    /**
+     * @param Filesystem $filesystem
+     * @return Context
+     */
+    public function setFilesystem($filesystem)
+    {
+        $this->filesystem = $filesystem;
         return $this;
     }
 

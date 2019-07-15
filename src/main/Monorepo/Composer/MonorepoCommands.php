@@ -10,6 +10,7 @@ class MonorepoCommands implements CommandProvider
     public function getCommands()
     {
         return [
+            new Command\InitCommand('monorepo:init'),
             new Command\BuildCommand('monorepo:build'),
             new Command\GitChangedCommand('monorepo:git-changed?')
         ];

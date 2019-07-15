@@ -1,0 +1,98 @@
+{
+    "name": "circlecrm/vauth",
+    "license": "MIT",
+    "type": "project",
+    "description": "CircleCRM Voiptech AAA System",
+    "autoload": {
+        "psr-0": { "": "src/", "SymfonyStandard": "app/" }
+    },
+    "autoload-dev": {
+        "classmap": ["src/foo"],
+        "psr-4": { "Baz": "src/baz" }
+    },
+    "repositories": [
+        {"type": "composer", "url": "https://packagist.voiptech.it/repo/private/"}
+    ],
+    "include-path": [
+        "src/foo/bar"
+    ],
+    "bin": [
+        "src/foo/bar/bin/binary.bin"
+    ],
+    "require": {
+        "php": ">=5.3.3",
+        "symfony/symfony": "2.8.*",
+        "kriswallsmith/assetic": "1.1.1",
+        "doctrine/orm": "~2.2,>=2.2.3",
+        "doctrine/doctrine-bundle": "~1.2",
+        "doctrine/doctrine-fixtures-bundle": "2.2.*",
+        "twig/extensions": "~1.0",
+        "symfony/assetic-bundle": "~2.3",
+        "symfony/swiftmailer-bundle": "~2.3",
+        "symfony/monolog-bundle": "~2.4",
+        "sensio/distribution-bundle": "~3.0",
+        "sensio/framework-extra-bundle": "~3.0",
+        "incenteev/composer-parameter-handler": "~2.0",
+        "braincrafted/bootstrap-bundle": "~2.0",
+        "gedmo/doctrine-extensions": "~2.0",
+        "ircmaxell/password-compat": "~1.0.3",
+        "twbs/bootstrap": "3.*",
+        "knplabs/knp-menu-bundle": "2.*",
+        "knplabs/knp-paginator-bundle": "2.4.*",
+        "components/jquery": "1.11.1",
+        "components/jqueryui": "1.11.1",
+        "oyejorge/less.php": "~1.5",
+        "fortawesome/font-awesome": "4.*",
+        "liip/theme-bundle": "1.*",
+	"friendsofsymfony/rest-bundle": "1.*",
+	"jms/serializer-bundle": "1.*",
+        "nelmio/api-doc-bundle": "~2.0",
+        "nelmio/cors-bundle": "^1.5",
+        "willdurand/hateoas-bundle": "1.*",
+        "voiptech/vpt-pgsql-bundle": "1.*",
+        "voiptech/vpt-menu-bundle": "2.*",
+        "voiptech/vpt-common-bundle":"1.*",
+        "voiptech/vpt-widget-bundle":"1.*",
+        "vich/uploader-bundle": "^1.0",
+        "mshauneu/php-rdkafka-bundle": "^1.0"
+    },
+    "require-dev": {
+        "sensio/generator-bundle": "~2.3"
+    },
+    "scripts": {
+        "post-root-package-install": [
+            "SymfonyStandard\\Composer::hookRootPackageInstall"
+        ],
+        "post-install-cmd": [
+            "Incenteev\\ParameterHandler\\ScriptHandler::buildParameters",
+            "Sensio\\Bundle\\DistributionBundle\\Composer\\ScriptHandler::buildBootstrap",
+            "Sensio\\Bundle\\DistributionBundle\\Composer\\ScriptHandler::clearCache",
+            "Sensio\\Bundle\\DistributionBundle\\Composer\\ScriptHandler::installAssets",
+            "Sensio\\Bundle\\DistributionBundle\\Composer\\ScriptHandler::installRequirementsFile",
+            "Sensio\\Bundle\\DistributionBundle\\Composer\\ScriptHandler::removeSymfonyStandardFiles",
+            "Braincrafted\\Bundle\\BootstrapBundle\\Composer\\ScriptHandler::install"
+        ],
+        "post-update-cmd": [
+            "Incenteev\\ParameterHandler\\ScriptHandler::buildParameters",
+            "Sensio\\Bundle\\DistributionBundle\\Composer\\ScriptHandler::buildBootstrap",
+            "Sensio\\Bundle\\DistributionBundle\\Composer\\ScriptHandler::clearCache",
+            "Sensio\\Bundle\\DistributionBundle\\Composer\\ScriptHandler::installAssets",
+            "Sensio\\Bundle\\DistributionBundle\\Composer\\ScriptHandler::installRequirementsFile",
+            "Sensio\\Bundle\\DistributionBundle\\Composer\\ScriptHandler::removeSymfonyStandardFiles",
+            "Braincrafted\\Bundle\\BootstrapBundle\\Composer\\ScriptHandler::install"
+        ]
+    },
+    "config": {
+        "bin-dir": "bin"
+    },
+    "extra": {
+        "symfony-app-dir": "app",
+        "symfony-web-dir": "web",
+        "incenteev-parameters": {
+            "file": "app/config/parameters.yml"
+        },
+        "branch-alias": {
+            "dev-master": "2.5-dev"
+        }
+    }
+}

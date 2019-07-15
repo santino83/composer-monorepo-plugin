@@ -14,7 +14,7 @@ use Composer\Factory;
 use Composer\IO\IOInterface;
 use Composer\IO\NullIO;
 
-class ComposerConfigLoader
+class ComposerLoader
 {
 
     /**
@@ -23,7 +23,7 @@ class ComposerConfigLoader
     private $factory;
 
     /**
-     * ComposerConfigLoader constructor.
+     * ComposerLoader constructor.
      * @param Factory|null $factory
      */
     public function __construct($factory = null)
@@ -36,12 +36,22 @@ class ComposerConfigLoader
      * @param IOInterface|null $io
      * @return Config
      */
-    public function load($path = null, $io = null)
+    public function loadConfig($path = null, $io = null)
+    {
+        return $this->loadComposer($path, $io)->getConfig();
+    }
+
+    /**
+     * @param string|null $path to composer.json file
+     * @param IOInterface|null $io
+     * @return \Composer\Composer
+     */
+    public function loadComposer($path = null, $io = null)
     {
         $localConfigPath = file_exists($path) ? $path : null;
         $_io = $io ? $io : new NullIO();
 
-        return $this->factory->createComposer($_io, $localConfigPath)->getConfig();
+        return $this->factory->createComposer($_io, $localConfigPath);
     }
 
 }

@@ -15,8 +15,8 @@ namespace Monorepo;
 
 use Monorepo\Composer\MonorepoInstalledRepository;
 use Monorepo\Composer\Util\Filesystem;
-use Monorepo\Loader\ComposerConfigLoader;
-use Monorepo\Loader\MonorepoJsonLoader;
+use Monorepo\Loader\ComposerLoader;
+use Monorepo\Loader\MonorepoLoader;
 use Symfony\Component\Finder\Finder;
 use Composer\IO\IOInterface;
 use Composer\Config;
@@ -40,12 +40,12 @@ class Build
     private $io;
 
     /**
-     * @var MonorepoJsonLoader
+     * @var MonorepoLoader
      */
     private $monorepoLoader;
 
     /**
-     * @var ComposerConfigLoader
+     * @var ComposerLoader
      */
     private $configLoader;
 
@@ -56,14 +56,14 @@ class Build
 
     /**
      * Build constructor.
-     * @param MonorepoJsonLoader|null $monorepoLoader
-     * @param ComposerConfigLoader|null $configLoader
+     * @param MonorepoLoader|null $monorepoLoader
+     * @param ComposerLoader|null $configLoader
      * @param Filesystem|null $fs
      */
     public function __construct($monorepoLoader = null, $configLoader = null, $fs = null)
     {
-        $this->monorepoLoader = $monorepoLoader ? $monorepoLoader : new MonorepoJsonLoader();
-        $this->configLoader = $configLoader ? $configLoader : new ComposerConfigLoader();
+        $this->monorepoLoader = $monorepoLoader ? $monorepoLoader : new MonorepoLoader();
+        $this->configLoader = $configLoader ? $configLoader : new ComposerLoader();
         $this->fs = $fs ? $fs : new Filesystem();
     }
 
@@ -77,7 +77,7 @@ class Build
         $this->io->write(sprintf('<info>Generating autoload files for monorepo sub-packages %s dev-dependencies.</info>', $context->isNoDevMode() ? 'without' : 'with'));
         $start = microtime(true);
 
-        $baseConfig = $this->configLoader->load($this->fs->path($context->getRootDirectory(),'composer.json'), $context->getIo());
+        $baseConfig = $this->configLoader->loadConfig($this->fs->path($context->getRootDirectory(),'composer.json'), $context->getIo());
         $vendorDir = $baseConfig->get('vendor-dir', Config::RELATIVE_PATHS);
 
         $packages = $this->loadPackages($context, $baseConfig);
@@ -200,7 +200,7 @@ class Build
         $rootDirectory = $context->getRootDirectory();
 
         if ($baseConfig == null) {
-            $baseConfig = $this->configLoader->load($this->fs->path($context->getRootDirectory(),'composer.json'), $context->getIo());
+            $baseConfig = $this->configLoader->loadConfig($this->fs->path($context->getRootDirectory(),'composer.json'), $context->getIo());
         }
         $vendorDir = $baseConfig->get('vendor-dir', Config::RELATIVE_PATHS);
 
