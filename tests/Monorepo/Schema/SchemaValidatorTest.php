@@ -50,6 +50,14 @@ class SchemaValidatorTest extends \PHPUnit_Framework_TestCase
         $this->assertTrue($validator->validate($c2));
     }
 
+    public function testValidateFull()
+    {
+        $validator = new SchemaValidator();
+
+        $c = file_get_contents($this->fs->path($this->fixtureDir,'resources','monorepo-test.json'));
+        $this->assertTrue($validator->validate($c));
+    }
+
     public function testValidateAnotherSchema()
     {
         $schema = json_decode(file_get_contents($this->fs->path($this->fixtureDir,'resources','another-schema.json')));

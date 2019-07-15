@@ -221,6 +221,10 @@ class Build
                 throw new \RuntimeException("Invalid " . $file->getRelativePath() . '/monorepo.json file:'."\n".$ex->getMessage());
             }
 
+            if(array_key_exists('root', $monorepoJson) && $monorepoJson['root']){
+                continue;
+            }
+
             $monorepoJson['path'] = $file->getRelativePath();
             $packages[$file->getRelativePath()] = $monorepoJson;
         }

@@ -1,0 +1,69 @@
+{
+    "name": "circlecrm/vauth",
+    "root": true,
+    "deps": [],
+    "deps-dev": [],
+    "autoload": {
+        "classmap": [],
+        "files": [],
+        "psr-0": {
+            "": "src/",
+            "SymfonyStandard": "app/"
+        }
+    },
+    "autoload-dev": {
+        "classmap": [
+            "src/foo"
+        ],
+        "files": [],
+        "psr-4": {
+            "Baz": "src/baz"
+        }
+    },
+    "include-path": [
+        "src/foo/bar"
+    ],
+    "bin": [
+        "src/foo/bar/bin/binary.bin"
+    ],
+    "require": {
+        "braincrafted/bootstrap-bundle": "~2.0",
+        "components/jquery": "1.11.1",
+        "components/jqueryui": "1.11.1",
+        "doctrine/doctrine-bundle": "~1.2",
+        "doctrine/doctrine-fixtures-bundle": "2.2.*",
+        "doctrine/orm": "~2.2,>=2.2.3",
+        "fortawesome/font-awesome": "4.*",
+        "friendsofsymfony/rest-bundle": "1.*",
+        "gedmo/doctrine-extensions": "~2.0",
+        "incenteev/composer-parameter-handler": "~2.0",
+        "ircmaxell/password-compat": "~1.0.3",
+        "jms/serializer-bundle": "1.*",
+        "knplabs/knp-menu-bundle": "2.*",
+        "knplabs/knp-paginator-bundle": "2.4.*",
+        "kriswallsmith/assetic": "1.1.1",
+        "liip/theme-bundle": "1.*",
+        "mshauneu/php-rdkafka-bundle": "^1.0",
+        "nelmio/api-doc-bundle": "~2.0",
+        "nelmio/cors-bundle": "^1.5",
+        "oyejorge/less.php": "~1.5",
+        "php": ">=5.3.3",
+        "sensio/distribution-bundle": "~3.0",
+        "sensio/framework-extra-bundle": "~3.0",
+        "symfony/assetic-bundle": "~2.3",
+        "symfony/monolog-bundle": "~2.4",
+        "symfony/swiftmailer-bundle": "~2.3",
+        "symfony/symfony": "2.8.*",
+        "twbs/bootstrap": "3.*",
+        "twig/extensions": "~1.0",
+        "vich/uploader-bundle": "^1.0",
+        "voiptech/vpt-common-bundle": "1.*",
+        "voiptech/vpt-menu-bundle": "2.*",
+        "voiptech/vpt-pgsql-bundle": "1.*",
+        "voiptech/vpt-widget-bundle": "1.*",
+        "willdurand/hateoas-bundle": "1.*"
+    },
+    "require-dev": {
+        "sensio/generator-bundle": "~2.3"
+    }
+}

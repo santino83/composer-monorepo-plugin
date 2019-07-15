@@ -7,6 +7,20 @@
       "type": "string",
       "description": "package name"
     },
+    "root": {
+      "type": "boolean",
+      "description": "Flags to indicate the root monorepo file"
+    },
+    "require": {
+      "type": "object",
+      "description": "This is a hash of names and versions of required vendor packages in production",
+      "additionalProperties": true
+    },
+    "require-dev": {
+      "type": "object",
+      "description": "This is a hash of names and versions of required vendor packages in development",
+      "additionalProperties": true
+    },
     "deps": {
       "type": "array",
       "items": {
@@ -80,7 +94,7 @@
       "type": "array",
       "items": {
         "type": "string",
-        "description": "A list of paths which should be threated as binaries"
+        "description": "A list of paths which should be treated as binaries"
       }
     }
   }
