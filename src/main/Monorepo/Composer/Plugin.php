@@ -2,9 +2,6 @@
 
 namespace Monorepo\Composer;
 
-use Composer\DependencyResolver\Operation\InstallOperation;
-use Composer\DependencyResolver\Operation\UninstallOperation;
-use Composer\Installer\PackageEvent;
 use Monorepo\Build;
 use Composer\Composer;
 use Composer\IO\IOInterface;
@@ -14,7 +11,6 @@ use Composer\EventDispatcher\EventSubscriberInterface;
 use Composer\Plugin\Capable;
 use Composer\Plugin\Capability\CommandProvider;
 use Monorepo\Console;
-use Monorepo\Context;
 use Monorepo\ContextBuilder;
 
 class Plugin implements PluginInterface, EventSubscriberInterface, Capable

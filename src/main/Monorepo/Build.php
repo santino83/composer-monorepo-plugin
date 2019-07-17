@@ -20,7 +20,6 @@ use Monorepo\Loader\MonorepoLoader;
 use Symfony\Component\Finder\Finder;
 use Composer\IO\IOInterface;
 use Composer\Config;
-use Composer\Factory;
 use Composer\Package\Package;
 
 /**

@@ -7,7 +7,6 @@ use Composer\Composer;
 use Composer\IO\IOInterface;
 use Composer\Script\Event;
 use Monorepo\Console;
-use Monorepo\Context;
 use Monorepo\ContextBuilder;
 
 class PluginTest extends \PHPUnit_Framework_TestCase
