@@ -69,14 +69,7 @@ class Console
             throw new \RuntimeException('It seems not to be a composer project. Run "composer init" first');
         }
 
-        // load composer
-        $composer = $this->getComposer($composerPath, $io);
-
-        // load monorepo from composer info
-        $monorepo = $this->monorepoLoader->fromComposer($composer, true);
-
-        // create monorepo.json
-        $this->writeMonorepo($monorepo, $monorepoPath);
+       $this->doUpdateMonorepo($context);
 
         // launch build (?)
 
@@ -86,7 +79,37 @@ class Console
         }
 
         // end
-        $context->getIo()->write('<info>Done!</info>');
+        $io->write('<info>Done!</info>');
+    }
+
+    /**
+     * @param Context $context
+     */
+    public function update($context)
+    {
+        $io = $context->getIo();
+
+        $io->write('<info>Updating monorepo.json</info>');
+        $this->doUpdateMonorepo($context);
+    }
+
+    /**
+     * @param Context $context
+     */
+    protected function doUpdateMonorepo($context)
+    {
+        $rootDir = $context->getRootDirectory();
+        $monorepoPath = $this->getRootMonorepoPath($rootDir);
+        $composerPath = $this->getRootComposerPath($rootDir);
+
+        // load composer
+        $composer = $this->getComposer($composerPath, $context->getIo());
+
+        // load monorepo from composer info
+        $monorepo = $this->monorepoLoader->fromComposer($composer, true);
+
+        // create/update monorepo.json
+        $this->writeMonorepo($monorepo, $monorepoPath);
     }
 
     /**
