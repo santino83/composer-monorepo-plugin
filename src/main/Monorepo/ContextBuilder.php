@@ -10,11 +10,11 @@ namespace Monorepo;
 
 
 use Composer\Composer;
+use Composer\EventDispatcher\EventDispatcher;
 use Composer\Installer\InstallationManager;
 use Composer\IO\IOInterface;
 use Composer\IO\NullIO;
 use Monorepo\Composer\AutoloadGenerator;
-use Monorepo\Composer\EventDispatcher;
 use Monorepo\Composer\MonorepoInstaller;
 
 class ContextBuilder
@@ -179,7 +179,7 @@ class ContextBuilder
     /**
      * @return MonorepoInstaller
      */
-    private function getMonorepoInstaller()
+    private function getInstaller()
     {
         if(!$this->monorepoInstaller){
             $this->monorepoInstaller = new MonorepoInstaller();
@@ -207,7 +207,7 @@ class ContextBuilder
     {
         if(!$this->installationManager){
             $this->installationManager = new InstallationManager();
-            $this->installationManager->addInstaller($this->getMonorepoInstaller());
+            $this->installationManager->addInstaller($this->getInstaller());
         }
 
         return $this->installationManager;
