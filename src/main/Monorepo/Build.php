@@ -232,6 +232,8 @@ class Build
         if (file_exists($installedJsonFile)) {
             $installed = json_decode(file_get_contents($installedJsonFile), true);
 
+            print_r($installed);
+
             if ($installed === NULL) {
                 throw new \RuntimeException("Invalid installed.json file at " . dirname($installedJsonFile));
             }

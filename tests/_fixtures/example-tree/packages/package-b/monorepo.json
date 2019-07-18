@@ -1,0 +1,18 @@
+{
+  "name": "example/package-b",
+  "deps": [
+    "jms/serializer-bundle",
+    "knplabs/knp-menu-bundle",
+    "knplabs/knp-paginator-bundle",
+    "kriswallsmith/assetic"
+  ],
+  "deps-dev": [
+    "phpunit/phpunit",
+    "sensio/generator-bundle"
+  ],
+  "autoload": {
+    "psr-4": {
+      "Example\\PackageB\\": "src/"
+    }
+  }
+}

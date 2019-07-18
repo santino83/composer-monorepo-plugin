@@ -68,16 +68,41 @@ class Monorepo
     private $packageDirs = [];
 
     /**
+     * @var string
+     */
+    private $path;
+
+    /**
      * Monorepo constructor.
      * @param bool $root
+     * @param string $path
      */
-    public function __construct($root = false)
+    public function __construct($root = false, $path = null)
     {
+        $this->path = $path;
         $this->root = $root;
         $this->require = new Dependency();
         $this->requireDev = new Dependency();
         $this->autoload = new Autoload();
         $this->autoloadDev = new Autoload();
+    }
+
+    /**
+     * @return string
+     */
+    public function getPath()
+    {
+        return $this->path;
+    }
+
+    /**
+     * @param string $path
+     * @return Monorepo
+     */
+    public function setPath($path)
+    {
+        $this->path = $path;
+        return $this;
     }
 
     /**
@@ -280,7 +305,6 @@ class Monorepo
 
     public function toArray()
     {
-
         $repo = [
             'name' => $this->name,
             'root' => $this->root,
@@ -303,6 +327,45 @@ class Monorepo
         }
 
         return $repo;
+    }
+
+    /**
+     * @param Monorepo $other
+     * @return void
+     */
+    public function merge($other)
+    {
+        foreach(array_diff($other->getDeps(), $this->deps) as $dep){
+            $this->deps[] = $dep;
+        }
+
+        foreach (array_diff($other->getDepsDev(), $this->depsDev) as $dep){
+            $this->depsDev[] = $dep;
+        }
+
+        foreach(array_diff($other->getIncludePath(), $this->includePath) as $path){
+            $this->includePath[] = $path;
+        }
+
+        foreach(array_diff($other->getBin(), $this->bin) as $path){
+            $this->bin[] = $path;
+        }
+
+        if($this->root && $other->isRoot()){
+            $this->requireDev = new Dependency();
+            $this->require = new Dependency();
+
+            foreach($other->getRequireDev() as $packageName => $packageVersion){
+                $this->requireDev[$packageName] = $packageVersion;
+            }
+
+            foreach($other->getRequire() as $packageName => $packageVersion){
+                $this->require[$packageName] = $packageVersion;
+            }
+        }
+
+        $this->autoload = Autoload::fromArray($other->getAutoload()->toArray());
+        $this->autoloadDev = Autoload::fromArray($other->getAutoloadDev()->toArray());
     }
 
 }

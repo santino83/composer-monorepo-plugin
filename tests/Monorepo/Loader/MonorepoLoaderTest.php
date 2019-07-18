@@ -156,6 +156,87 @@ class MonorepoLoaderTest extends \PHPUnit_Framework_TestCase
         $this->assertContains('src/foo/bar/bin/binary.bin', $monorepo->getBin());
     }
 
+    public function testLoad_ROOT()
+    {
+        $monorepo = $this->loader->load($this->fs->path($this->fixtureDir, 'resources','monorepo-test.json'));
+
+        $this->assertTrue($monorepo->isRoot());
+        $this->assertEquals('circlecrm/vauth', $monorepo->getName());
+
+        $this->assertTrue($monorepo->getRequire()->has('symfony/symfony'));
+        $this->assertTrue($monorepo->getRequire()->has('php'));
+        $this->assertTrue($monorepo->getRequire()->has('fortawesome/font-awesome'));
+
+        $this->assertTrue($monorepo->getRequireDev()->has('sensio/generator-bundle'));
+
+        $this->assertEmpty($monorepo->getDepsDev());
+        $this->assertEmpty($monorepo->getDeps());
+
+        $autoload = $monorepo->getAutoload();
+        $this->assertEmpty($autoload->getClassmap());
+        $this->assertEmpty($autoload->getFiles());
+        $this->assertEmpty($autoload->getPsr4());
+        $this->assertCount(2, $autoload->getPsr0());
+        $this->assertArrayHasKey("", $autoload->getPsr0());
+        $this->assertEquals("src/", $autoload->getPsr0()[""]);
+        $this->assertArrayHasKey("SymfonyStandard", $autoload->getPsr0());
+        $this->assertEquals('app/', $autoload->getPsr0()['SymfonyStandard']);
+
+        $autoloadDev = $monorepo->getAutoloadDev();
+        $this->assertEmpty($autoloadDev->getFiles());
+        $this->assertEmpty($autoloadDev->getPsr0());
+        $this->assertCount(1, $autoloadDev->getClassmap());
+        $this->assertContains('src/foo', $autoloadDev->getClassmap());
+        $this->assertCount(1, $autoloadDev->getPsr4());
+        $this->assertArrayHasKey('Baz', $autoloadDev->getPsr4());
+        $this->assertEquals('src/baz', $autoloadDev->getPsr4()['Baz']);
+
+        $this->assertNotEmpty($monorepo->getIncludePath());
+        $this->assertContains('src/foo/bar', $monorepo->getIncludePath());
+
+        $this->assertNotEmpty($monorepo->getBin());
+        $this->assertContains('src/foo/bar/bin/binary.bin', $monorepo->getBin());
+    }
+
+    public function testLoad_NO_ROOT()
+    {
+        $monorepo = $this->loader->load($this->fs->path($this->fixtureDir, 'resources','monorepo-slave-test.json'));
+
+        $this->assertFalse($monorepo->isRoot());
+        $this->assertEquals('circlecrm/another', $monorepo->getName());
+
+        $this->assertEmpty($monorepo->getRequire());
+        $this->assertEmpty($monorepo->getRequireDev());
+
+        $this->assertContains('vendor/phpunit/phpunit',$monorepo->getDepsDev());
+        $this->assertContains('vendor/doctrine/common',$monorepo->getDeps());
+
+        $autoload = $monorepo->getAutoload();
+        $this->assertEmpty($autoload->getClassmap());
+        $this->assertEmpty($autoload->getFiles());
+        $this->assertEmpty($autoload->getPsr4());
+        $this->assertCount(2, $autoload->getPsr0());
+        $this->assertArrayHasKey("CircleCRM/Another", $autoload->getPsr0());
+        $this->assertEquals("src/", $autoload->getPsr0()["CircleCRM/Another"]);
+        $this->assertArrayHasKey("SymfonyStandard", $autoload->getPsr0());
+        $this->assertEquals('app/', $autoload->getPsr0()['SymfonyStandard']);
+
+        $autoloadDev = $monorepo->getAutoloadDev();
+        $this->assertEmpty($autoloadDev->getFiles());
+        $this->assertEmpty($autoloadDev->getPsr0());
+        $this->assertCount(1, $autoloadDev->getClassmap());
+        $this->assertContains('src/foo', $autoloadDev->getClassmap());
+        $this->assertCount(1, $autoloadDev->getPsr4());
+        $this->assertArrayHasKey('Baz', $autoloadDev->getPsr4());
+        $this->assertEquals('src/baz', $autoloadDev->getPsr4()['Baz']);
+
+        $this->assertNotEmpty($monorepo->getIncludePath());
+        $this->assertContains('src/foo/bar', $monorepo->getIncludePath());
+
+        $this->assertNotEmpty($monorepo->getBin());
+        $this->assertContains('src/foo/bar/bin/binary.bin', $monorepo->getBin());
+    }
+
     /**
      * @expectedException \RuntimeException
      */

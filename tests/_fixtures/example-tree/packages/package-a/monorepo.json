@@ -1,0 +1,15 @@
+{
+  "name": "example/package-a",
+  "deps": [
+    "components/jquery",
+    "components/jqueryui"
+  ],
+  "deps-dev": [
+    "phpunit/phpunit"
+  ],
+  "autoload": {
+    "psr-4": {
+      "Example\\PackageA\\": "src/"
+    }
+  }
+}

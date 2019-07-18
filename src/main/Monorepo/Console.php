@@ -9,6 +9,7 @@
 namespace Monorepo;
 
 
+use Composer\Composer;
 use Composer\IO\IOInterface;
 use Monorepo\Composer\Util\Filesystem;
 use Monorepo\Loader\ComposerLoader;
@@ -47,6 +48,8 @@ class Console
     }
 
     /**
+     * Initializes a monorepo project
+     *
      * @param Context $context
      */
     public function init($context)
@@ -69,12 +72,19 @@ class Console
             throw new \RuntimeException('It seems not to be a composer project. Run "composer init" first');
         }
 
-       $this->doUpdateMonorepo($context);
+        // load composer
+        $composer = $this->getComposer($composerPath, $context->getIo());
+
+        // load monorepo from composer info
+        $monorepo = $this->monorepoLoader->fromComposer($composer, true);
+        $monorepo->setPath($monorepoPath);
+
+        $this->doUpdateMonorepo($monorepo);
 
         // launch build (?)
 
         // final check
-        if(!$this->isMonorepoInitialized($monorepoPath)){
+        if(!$this->isMonorepoInitialized($monorepo->getPath())){
             throw new \RuntimeException('Monorepo project not initialized. Try again');
         }
 
@@ -83,45 +93,103 @@ class Console
     }
 
     /**
+     * Updates monorepo project
+     *
      * @param Context $context
      */
     public function update($context)
     {
         $io = $context->getIo();
 
-        $io->write('<info>Updating monorepo.json</info>');
-        $this->doUpdateMonorepo($context);
-    }
-
-    /**
-     * @param Context $context
-     */
-    protected function doUpdateMonorepo($context)
-    {
         $rootDir = $context->getRootDirectory();
-        $monorepoPath = $this->getRootMonorepoPath($rootDir);
+
+        $io->write('<info>Updating monorepo.json</info>');
+
         $composerPath = $this->getRootComposerPath($rootDir);
 
         // load composer
         $composer = $this->getComposer($composerPath, $context->getIo());
+        $monorepo = $this->loadMonorepo($rootDir);
 
-        // load monorepo from composer info
-        $monorepo = $this->monorepoLoader->fromComposer($composer, true);
+        $this->doUpdateMonorepo($monorepo, $composer);
+    }
 
-        // create/update monorepo.json
-        $this->writeMonorepo($monorepo, $monorepoPath);
+    /**
+     * Updates all monorepo subpackages
+     *
+     * @param Context $context
+     */
+    public function build($context)
+    {
+        $io = $context->getIo();
+
+        $rootDir = $context->getRootDirectory();
+        $rootMonorepoPath = $this->getRootMonorepoPath($rootDir);
+        $composerPath = $this->getRootComposerPath($rootDir);
+
+        if(!$this->isMonorepoInitialized($rootMonorepoPath))
+        {
+            // do nothing if project is not initialized
+            return;
+        }
+
+        $rootMonorepo = $this->loadMonorepo($rootMonorepoPath);
+
+
     }
 
     /**
      * @param Monorepo $monorepo
-     * @param string $path
+     * @return array|string
      */
-    protected function writeMonorepo($monorepo, $path)
+    protected function getPackageDirs($monorepo)
+    {
+        if(!$monorepo->getPackageDirs()){
+            return ['packages','lib','src'];
+        }
+
+        return $monorepo->getPackageDirs();
+    }
+
+    /**
+     * @param string $basePath
+     * @return Monorepo
+     */
+    protected function loadMonorepo($basePath)
+    {
+        return $this->monorepoLoader->load($this->fs->path($basePath, 'monorepo.json'));
+    }
+
+    /**
+     * Updates main monorepo.json file
+     * @param Monorepo $monorepo
+     * @param string|Composer|null $composer
+     */
+    protected function doUpdateMonorepo($monorepo, $composer = null)
+    {
+
+        if($composer){
+
+            // load updated monorepo from composer
+            $composerMonorepo = $this->monorepoLoader->fromComposer($composer, true);
+
+            // merge monorepo.json with composer.json data
+            $monorepo->merge($composerMonorepo);
+        }
+
+        // create/update monorepo.json
+        $this->writeMonorepo($monorepo);
+    }
+
+    /**
+     * @param Monorepo $monorepo
+     */
+    protected function writeMonorepo($monorepo)
     {
         $monorepoJson = json_encode($monorepo->toArray(), JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
 
         try{
-            file_put_contents($path, $monorepoJson);
+            file_put_contents($monorepo->getPath(), $monorepoJson);
         }catch (\Exception $ex){
             throw new \RuntimeException(sprintf("Unable to write monorepo.json at %s:\n%s", $path, $ex->getMessage()), $ex->getCode(), $ex);
         }

@@ -45,7 +45,6 @@ class MonorepoLoader
      */
     public function fromComposer($path = null, $root = false)
     {
-        $mr = new Monorepo($root);
 
         if($path && $path instanceof Composer)
         {
@@ -53,6 +52,8 @@ class MonorepoLoader
         }else{
             $composer = $this->composerLoader->loadComposer($path);
         }
+
+        $mr = new Monorepo($root);
 
         $package = $composer->getPackage();
 
@@ -94,6 +95,39 @@ class MonorepoLoader
     }
 
     /**
+     * @param string $path monorepo.json path
+     * @return Monorepo
+     */
+    public function load($path)
+    {
+        $raw = $this->fromJson(file_get_contents($path));
+
+        $mr = new Monorepo($raw['root'], $path);
+        $mr->setDepsDev($raw['deps-dev'])
+            ->setDeps($raw['deps'])
+            ->setBin($raw['bin'])
+            ->setIncludePath($raw['include-path'])
+            ->setName($raw['name'])
+            ->setPackageDirs($raw['package-dirs'])
+            ->setAutoloadDev(Autoload::fromArray($raw['autoload-dev']))
+            ->setAutoload(Autoload::fromArray($raw['autoload']));
+
+        if($mr->isRoot()){
+
+            foreach($raw['require'] as $packageName => $packageVersion){
+                $mr->getRequire()[$packageName] = $packageVersion;
+            }
+
+            foreach($raw['require-dev'] as $packageName => $packageVersion){
+                $mr->getRequireDev()[$packageName] = $packageVersion;
+            }
+
+        }
+
+        return $mr;
+    }
+
+    /**
      * @param string $file full path to monorepo.json file
      * @return array
      * @throws \RuntimeException on errors
@@ -128,12 +162,16 @@ class MonorepoLoader
 
             return array_merge([
                 'name' => '',
+                'root' => false,
+                'require' => [],
+                'require-dev' => [],
                 'autoload' => [],
                 'autoload-dev' => [],
                 'deps' => [],
                 'deps-dev' => [],
                 'include-path' => [],
-                'bin' => []
+                'bin' => [],
+                'package-dirs' => []
             ],$monorepoJson);
         }
     }
