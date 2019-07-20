@@ -1,0 +1,16 @@
+{
+    "name": "example-simple/main",
+    "root": true,
+    "require": {
+        "foo/baz": "@stable"
+    },
+    "require-dev": {
+        "bar/baz": "@stable"
+    },
+    "autoload": {
+        "psr-0": {"Main\\": "src/"}
+    },
+    "package-dirs": [
+        "PSR4","bar","foo"
+    ]
+}

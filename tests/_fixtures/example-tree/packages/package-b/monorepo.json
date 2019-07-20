@@ -4,11 +4,13 @@
     "jms/serializer-bundle",
     "knplabs/knp-menu-bundle",
     "knplabs/knp-paginator-bundle",
-    "kriswallsmith/assetic"
+    "kriswallsmith/assetic",
+    "unexistent/dependency"
   ],
   "deps-dev": [
     "phpunit/phpunit",
-    "sensio/generator-bundle"
+    "sensio/generator-bundle",
+    "unexistent/dependency2"
   ],
   "autoload": {
     "psr-4": {

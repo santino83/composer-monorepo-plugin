@@ -2,14 +2,14 @@
 
 namespace Monorepo\Command;
 
+
+use Monorepo\Console;
 use Monorepo\ContextBuilder;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Composer\IO\ConsoleIO;
 use Composer\Command\BaseCommand;
-
-use Monorepo\Build;
 
 class BuildCommand extends BaseCommand
 {
@@ -33,7 +33,7 @@ class BuildCommand extends BaseCommand
             ->withIo(new ConsoleIO($input, $output, $this->getHelperSet()))
             ->build(getcwd(), $optimize, $noDevMode);
 
-        $build = new Build();
-        $build->build($context);
+        $console = new Console();
+        $console->build($context);
     }
 }

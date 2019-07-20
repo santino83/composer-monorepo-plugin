@@ -10,6 +10,7 @@ namespace Monorepo\Loader;
 
 
 use Composer\Composer;
+use Composer\Config;
 use Monorepo\Model\Autoload;
 use Monorepo\Model\Monorepo;
 use Monorepo\Schema\SchemaValidator;
@@ -57,7 +58,8 @@ class MonorepoLoader
 
         $package = $composer->getPackage();
 
-        $mr->setName($package->getName());
+        $mr->setName($package->getName())
+            ->setVendorDir($composer->getConfig()->get('vendor-dir', Config::RELATIVE_PATHS));
 
         if($root) {
             // load require
@@ -108,9 +110,16 @@ class MonorepoLoader
             ->setBin($raw['bin'])
             ->setIncludePath($raw['include-path'])
             ->setName($raw['name'])
-            ->setPackageDirs($raw['package-dirs'])
             ->setAutoloadDev(Autoload::fromArray($raw['autoload-dev']))
             ->setAutoload(Autoload::fromArray($raw['autoload']));
+
+        if($raw['vendor-dir']){
+            $mr->setVendorDir($raw['vendor-dir']);
+        }
+
+        if($raw['package-dirs']){
+            $mr->setPackageDirs($raw['package-dirs']);
+        }
 
         if($mr->isRoot()){
 
@@ -162,6 +171,7 @@ class MonorepoLoader
 
             return array_merge([
                 'name' => '',
+                'vendor-dir' => '',
                 'root' => false,
                 'require' => [],
                 'require-dev' => [],

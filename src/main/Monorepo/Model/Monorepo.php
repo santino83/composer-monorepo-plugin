@@ -12,6 +12,9 @@ namespace Monorepo\Model;
 class Monorepo
 {
 
+    const DEFAULT_PACKAGE_DIRS = ['packages','lib'];
+    const DEFAULT_VENDOR_DIR = 'vendor';
+
     /**
      * @var string
      */
@@ -70,6 +73,11 @@ class Monorepo
     /**
      * @var string
      */
+    private $vendorDir = 'vendor';
+
+    /**
+     * @var string
+     */
     private $path;
 
     /**
@@ -85,6 +93,7 @@ class Monorepo
         $this->requireDev = new Dependency();
         $this->autoload = new Autoload();
         $this->autoloadDev = new Autoload();
+        $this->packageDirs = self::DEFAULT_PACKAGE_DIRS;
     }
 
     /**
@@ -102,6 +111,24 @@ class Monorepo
     public function setPath($path)
     {
         $this->path = $path;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getVendorDir()
+    {
+        return $this->vendorDir;
+    }
+
+    /**
+     * @param string $vendorDir
+     * @return Monorepo
+     */
+    public function setVendorDir($vendorDir)
+    {
+        $this->vendorDir = $vendorDir;
         return $this;
     }
 
@@ -227,7 +254,7 @@ class Monorepo
      */
     public function setPackageDirs(array $packageDirs)
     {
-        $this->packageDirs = $packageDirs;
+        $this->packageDirs = $packageDirs ? $packageDirs : self::DEFAULT_PACKAGE_DIRS;
         return $this;
     }
 
@@ -303,18 +330,65 @@ class Monorepo
         return $this;
     }
 
+    /**
+     * Checks if $required is presents into requires
+     *
+     * @param $required
+     * @param bool $includeDev checks in require-dev too
+     * @return bool
+     */
+    public function hasRequire($required, $includeDev = true)
+    {
+        $result = $this->require->has($required);
+
+        return $includeDev ? $result || $this->requireDev->has($required) : $result;
+    }
+
     public function toArray()
     {
         $repo = [
-            'name' => $this->name,
-            'root' => $this->root,
-            'deps' => $this->deps,
-            'deps-dev' => $this->depsDev,
-            'autoload' => $this->autoload->toArray(),
-            'autoload-dev' => $this->autoloadDev->toArray(),
-            'include-path' => $this->includePath,
-            'bin' => $this->bin
+            'name' => $this->name
         ];
+
+        if($this->root){
+            $repo['root'] = true;
+        }
+
+        if(!$this->autoload->isEmpty()){
+            $repo['autoload'] = $this->autoload->toArray();
+        }
+
+        if(!$this->autoloadDev->isEmpty()){
+            $repo['autoload-dev'] = $this->autoloadDev->isEmpty();
+        }
+
+        if($this->deps){
+            $repo['deps'] = $this->deps;
+        }
+
+        if($this->depsDev){
+            $repo['deps-dev'] = $this->depsDev;
+        }
+
+        if($this->includePath){
+            $repo['include-path'] = $this->includePath;
+        }
+
+        if($this->bin){
+            $repo['bin'] = $this->bin;
+        }
+
+        if(!$this->root){
+            return $repo;
+        }
+
+        if($this->vendorDir && $this->vendorDir !== self::DEFAULT_VENDOR_DIR) {
+            $repo['vendor-dir'] = $this->vendorDir;
+        }
+
+        if($this->packageDirs && count(array_diff($this->packageDirs, self::DEFAULT_PACKAGE_DIRS)) !== 0){
+            $repo['package-dirs'] = $this->packageDirs;
+        }
 
         if (count($this->require)) {
             $this->require->ksort();
@@ -363,6 +437,8 @@ class Monorepo
                 $this->require[$packageName] = $packageVersion;
             }
         }
+
+        $this->vendorDir = $other->getVendorDir();
 
         $this->autoload = Autoload::fromArray($other->getAutoload()->toArray());
         $this->autoloadDev = Autoload::fromArray($other->getAutoloadDev()->toArray());

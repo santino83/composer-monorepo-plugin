@@ -237,6 +237,12 @@ class MonorepoLoaderTest extends \PHPUnit_Framework_TestCase
         $this->assertContains('src/foo/bar/bin/binary.bin', $monorepo->getBin());
     }
 
+    public function testLoad_Require()
+    {
+        $monorepo = $this->loader->load($this->fs->path($this->fixtureDir,'example-simple','monorepo.json'));
+        $this->assertTrue($monorepo->hasRequire('foo/baz'));
+    }
+
     /**
      * @expectedException \RuntimeException
      */

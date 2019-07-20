@@ -2,7 +2,7 @@
 
 namespace Monorepo\Composer;
 
-use Monorepo\Build;
+
 use Composer\Composer;
 use Composer\IO\IOInterface;
 use Composer\Plugin\PluginInterface;
@@ -22,24 +22,21 @@ class Plugin implements PluginInterface, EventSubscriberInterface, Capable
     private $console;
 
     /**
-     * @var \Monorepo\Build
-     */
-    private $build;
-
-    /**
      * @var IOInterface
      */
     private $io;
 
-    public function __construct(Build $build = null, Console $console = null)
+    /**
+     * Plugin constructor.
+     * @param Console|null $console
+     */
+    public function __construct(Console $console = null)
     {
-        $this->build = $build;
-        $this->console = $console;
+        $this->console = $console ?: new Console();
     }
 
     public function activate(Composer $composer, IOInterface $io)
     {
-        $this->build = $this->build ?: new Build();
         $this->console = $this->console ?: new Console();
         $this->io = $io;
     }
@@ -64,7 +61,6 @@ class Plugin implements PluginInterface, EventSubscriberInterface, Capable
             ->build(getcwd(), $optimize, !$event->isDevMode());
 
         $this->console->update($context);
-        $this->build->build($context);
     }
 
     public function getCapabilities()

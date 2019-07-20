@@ -12,7 +12,10 @@ namespace Monorepo;
 use Composer\Composer;
 use Composer\IO\IOInterface;
 use Monorepo\Composer\Util\Filesystem;
+use Monorepo\Composer\VendorDependencyDumper;
+use Monorepo\Exception\MissingDependencyException;
 use Monorepo\Loader\ComposerLoader;
+use Monorepo\Loader\DependencyTreeLoader;
 use Monorepo\Loader\MonorepoLoader;
 use Monorepo\Model\Monorepo;
 
@@ -30,6 +33,11 @@ class Console
     private $composerLoader;
 
     /**
+     * @var DependencyTreeLoader
+     */
+    private $dependencyTreeLoader;
+
+    /**
      * @var Filesystem
      */
     private $fs;
@@ -45,6 +53,7 @@ class Console
         $this->monorepoLoader = $monorepoLoader ? $monorepoLoader : new MonorepoLoader();
         $this->composerLoader = $composerLoader ? $composerLoader : new ComposerLoader();
         $this->fs = $fs ? $fs : new Filesystem();
+        $this->dependencyTreeLoader = new DependencyTreeLoader($this->monorepoLoader, $this->fs);
     }
 
     /**
@@ -81,8 +90,6 @@ class Console
 
         $this->doUpdateMonorepo($monorepo);
 
-        // launch build (?)
-
         // final check
         if(!$this->isMonorepoInitialized($monorepo->getPath())){
             throw new \RuntimeException('Monorepo project not initialized. Try again');
@@ -102,16 +109,20 @@ class Console
         $io = $context->getIo();
 
         $rootDir = $context->getRootDirectory();
+        $monorepoPath = $this->getRootMonorepoPath($rootDir);
 
-        $io->write('<info>Updating monorepo.json</info>');
+        $io->write('<info>Updating main monorepo.json</info>');
 
         $composerPath = $this->getRootComposerPath($rootDir);
 
         // load composer
         $composer = $this->getComposer($composerPath, $context->getIo());
-        $monorepo = $this->loadMonorepo($rootDir);
+        $monorepo = $this->loadMonorepo($monorepoPath);
 
         $this->doUpdateMonorepo($monorepo, $composer);
+
+        // update all monorepo subpackages
+        $this->build($context);
     }
 
     /**
@@ -125,7 +136,6 @@ class Console
 
         $rootDir = $context->getRootDirectory();
         $rootMonorepoPath = $this->getRootMonorepoPath($rootDir);
-        $composerPath = $this->getRootComposerPath($rootDir);
 
         if(!$this->isMonorepoInitialized($rootMonorepoPath))
         {
@@ -133,31 +143,42 @@ class Console
             return;
         }
 
+        $io->write(sprintf('<info>Generating autoload files for monorepo sub-packages %s dev-dependencies.</info>', $context->isNoDevMode() ? 'without' : 'with'));
+
+        $start = microtime(true);
+
         $rootMonorepo = $this->loadMonorepo($rootMonorepoPath);
+        $dependencyTree = $this->dependencyTreeLoader->load($rootMonorepo, !$context->isNoDevMode());
 
+        $vendorDump = new VendorDependencyDumper($context->getGenerator(), $context->getInstallationManager(), $this->fs);
 
-    }
+        try{
+            $vendorDump->dump($dependencyTree, $context->isOptimize(), function($processedMonorepo) use($io){
+                /**@var $processedMonorepo Monorepo */
+                $io->write(sprintf(' [Subpackage] <comment>%s</comment>', $processedMonorepo->getName()));
+            });
+        }catch (MissingDependencyException $ex){
 
-    /**
-     * @param Monorepo $monorepo
-     * @return array|string
-     */
-    protected function getPackageDirs($monorepo)
-    {
-        if(!$monorepo->getPackageDirs()){
-            return ['packages','lib','src'];
+            $io->write(sprintf('<error>%s</error>', $ex->getMessage()));
+
+            foreach($ex->getOrphaned() as $packageName => $deps)
+            {
+                $io->write(sprintf('<info>%s</info> missing dependencies: <error>%s</error>', $packageName, implode(',', (array)$deps)));
+            }
         }
 
-        return $monorepo->getPackageDirs();
+        $duration = microtime(true) - $start;
+
+        $io->write(sprintf('Monorepo subpackage autoloads generated in <comment>%0.2f</comment> seconds.', $duration));
     }
 
     /**
-     * @param string $basePath
+     * @param string $path
      * @return Monorepo
      */
-    protected function loadMonorepo($basePath)
+    protected function loadMonorepo($path)
     {
-        return $this->monorepoLoader->load($this->fs->path($basePath, 'monorepo.json'));
+        return $this->monorepoLoader->load($path);
     }
 
     /**
@@ -191,7 +212,7 @@ class Console
         try{
             file_put_contents($monorepo->getPath(), $monorepoJson);
         }catch (\Exception $ex){
-            throw new \RuntimeException(sprintf("Unable to write monorepo.json at %s:\n%s", $path, $ex->getMessage()), $ex->getCode(), $ex);
+            throw new \RuntimeException(sprintf("Unable to write monorepo.json at %s:\n%s", $monorepo->getPath(), $ex->getMessage()), $ex->getCode(), $ex);
         }
     }
 
