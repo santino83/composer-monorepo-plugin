@@ -123,6 +123,10 @@ class MonorepoLoader
 
         if($mr->isRoot()){
 
+            if($raw['namespace']){
+                $mr->setNamespace($raw['namespace']);
+            }
+
             foreach($raw['require'] as $packageName => $packageVersion){
                 $mr->getRequire()[$packageName] = $packageVersion;
             }
@@ -181,7 +185,8 @@ class MonorepoLoader
                 'deps-dev' => [],
                 'include-path' => [],
                 'bin' => [],
-                'package-dirs' => []
+                'package-dirs' => [],
+                'namespace' => null
             ],$monorepoJson);
         }
     }

@@ -144,6 +144,7 @@ class DependencyTree
      */
     public function getDependencies($excludeRoot = true)
     {
+        $this->ensureBuilt();
         $deps = array_merge([], $this->deps);
 
         if($excludeRoot){

@@ -3,7 +3,9 @@
     "license": "MIT",
     "type": "composer-plugin",
     "require": {
-        "composer-plugin-api": "^1.0"
+        "composer-plugin-api": "^1.0",
+        "jawira/case-converter": "^3.0",
+        "ext-json": "^1.6"
     },
     "require-dev": {
         "php": "^5.5|^7.0",

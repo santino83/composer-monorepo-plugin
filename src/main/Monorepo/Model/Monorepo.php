@@ -9,6 +9,8 @@
 namespace Monorepo\Model;
 
 
+use Monorepo\Util\StringUtils;
+
 class Monorepo
 {
 
@@ -81,6 +83,11 @@ class Monorepo
     private $path;
 
     /**
+     * @var string
+     */
+    private $namespace;
+
+    /**
      * Monorepo constructor.
      * @param bool $root
      * @param string $path
@@ -94,6 +101,7 @@ class Monorepo
         $this->autoload = new Autoload();
         $this->autoloadDev = new Autoload();
         $this->packageDirs = self::DEFAULT_PACKAGE_DIRS;
+        $this->namespace = $path ? StringUtils::toPascal(basename(dirname($path))): null;
     }
 
     /**
@@ -331,6 +339,24 @@ class Monorepo
     }
 
     /**
+     * @return string
+     */
+    public function getNamespace()
+    {
+        return $this->namespace;
+    }
+
+    /**
+     * @param string $namespace
+     * @return Monorepo
+     */
+    public function setNamespace($namespace)
+    {
+        $this->namespace = $namespace;
+        return $this;
+    }
+
+    /**
      * Checks if $required is presents into requires
      *
      * @param $required
@@ -380,6 +406,10 @@ class Monorepo
 
         if(!$this->root){
             return $repo;
+        }
+
+        if($this->namespace){
+            $repo['namespace'] = $this->namespace;
         }
 
         if($this->vendorDir && $this->vendorDir !== self::DEFAULT_VENDOR_DIR) {
@@ -436,6 +466,8 @@ class Monorepo
             foreach($other->getRequire() as $packageName => $packageVersion){
                 $this->require[$packageName] = $packageVersion;
             }
+
+            $this->namespace = $other->namespace ? $other->namespace : $this->namespace;
         }
 
         $this->vendorDir = $other->getVendorDir();

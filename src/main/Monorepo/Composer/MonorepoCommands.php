@@ -12,7 +12,8 @@ class MonorepoCommands implements CommandProvider
         return [
             new Command\InitCommand('monorepo:init'),
             new Command\BuildCommand('monorepo:build'),
-            new Command\GitChangedCommand('monorepo:git-changed?')
+            new Command\AddCommand('monorepo:add')
+           // new Command\GitChangedCommand('monorepo:git-changed?')
         ];
     }
 }

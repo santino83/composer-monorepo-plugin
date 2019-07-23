@@ -16,6 +16,7 @@ use Composer\IO\IOInterface;
 use Composer\IO\NullIO;
 use Monorepo\Composer\AutoloadGenerator;
 use Monorepo\Composer\MonorepoInstaller;
+use Monorepo\Request\RequestInterface;
 
 class ContextBuilder
 {
@@ -44,6 +45,11 @@ class ContextBuilder
      * @var InstallationManager
      */
     private $installationManager;
+
+    /**
+     * @var RequestInterface
+     */
+    private $request;
 
     private function __construct()
     {
@@ -134,6 +140,16 @@ class ContextBuilder
     }
 
     /**
+     * @param RequestInterface $request
+     * @return $this
+     */
+    public function withRequest($request)
+    {
+        $this->request = $request;
+        return $this;
+    }
+
+    /**
      * @param string $rootDirectory
      * @param bool $optimize
      * @param bool $noDevMode
@@ -145,7 +161,8 @@ class ContextBuilder
         $context = new Context($rootDirectory, $optimize, $noDevMode);
         $context->setGenerator($this->getGenerator())
             ->setIo($this->getIo())
-            ->setInstallationManager($this->getInstallationManager());
+            ->setInstallationManager($this->getInstallationManager())
+            ->setRequest($this->request);
 
         $context->getGenerator()->setDevMode(!$context->isNoDevMode());
 

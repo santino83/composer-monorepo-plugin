@@ -17,7 +17,11 @@ use Monorepo\Exception\MissingDependencyException;
 use Monorepo\Loader\ComposerLoader;
 use Monorepo\Loader\DependencyTreeLoader;
 use Monorepo\Loader\MonorepoLoader;
+use Monorepo\Model\Autoload;
 use Monorepo\Model\Monorepo;
+use Monorepo\Request\AddMonorepoRequest;
+use Monorepo\Request\InitiMonorepoRequest;
+use Monorepo\Util\StringUtils;
 
 class Console
 {
@@ -86,7 +90,13 @@ class Console
 
         // load monorepo from composer info
         $monorepo = $this->monorepoLoader->fromComposer($composer, true);
-        $monorepo->setPath($monorepoPath);
+        $monorepo->setPath($monorepoPath)
+            ->setNamespace(StringUtils::toPascal(basename(dirname($monorepoPath))));
+
+        if($context->getRequest() && $context->getRequest() instanceof InitiMonorepoRequest)
+        {
+            $monorepo->setNamespace($context->getRequest()->getNamespace());
+        }
 
         $this->doUpdateMonorepo($monorepo);
 
@@ -110,6 +120,12 @@ class Console
 
         $rootDir = $context->getRootDirectory();
         $monorepoPath = $this->getRootMonorepoPath($rootDir);
+
+        if(!$this->isMonorepoInitialized($monorepoPath))
+        {
+            // do nothing if project is not initialized
+            return;
+        }
 
         $io->write('<info>Updating main monorepo.json</info>');
 
@@ -170,6 +186,83 @@ class Console
         $duration = microtime(true) - $start;
 
         $io->write(sprintf('Monorepo subpackage autoloads generated in <comment>%0.2f</comment> seconds.', $duration));
+    }
+
+    /**
+     * Adds a new sub-module to root module
+     *
+     * @param Context $context
+     */
+    public function add($context)
+    {
+        $io = $context->getIo();
+
+        $rootDir = $context->getRootDirectory();
+        $request = $context->getRequest();
+        /**@var $request AddMonorepoRequest */
+
+        if(!$request){
+            throw new \RuntimeException('Invalid input');
+        }
+
+        $io->write(sprintf('<info>Generating package %s</info>', $request->getName()));
+
+        $monorepoBasePath = $this->fs->path($rootDir, $request->getPackageDir());
+        $monorepoAutoloadSrcPath = $this->fs->path($monorepoBasePath,'src');
+        $monorepoPath = $this->fs->path($monorepoBasePath, 'monorepo.json');
+
+        if(file_exists($monorepoPath)){
+            throw new \RuntimeException(sprintf('Directory %s already exists and contains a monorepo', $monorepoBasePath));
+        }
+
+        try{
+            mkdir($monorepoBasePath, 0755, true);
+        }catch (\Exception $ex){
+            throw new \RuntimeException(sprintf('Unable to create %s : %s', $monorepoBasePath, $ex->getMessage()), $ex->getCode(), $ex);
+        }
+
+        if(!file_exists($monorepoAutoloadSrcPath)) {
+            try {
+                mkdir($monorepoAutoloadSrcPath, 0755, true);
+            } catch (\Exception $ex) {
+                throw new \RuntimeException(sprintf('Unable to create %s : %s', $monorepoAutoloadSrcPath, $ex->getMessage()), $ex->getCode(), $ex);
+            }
+        }
+
+        $monorepo = new Monorepo(false, $monorepoPath);
+        $monorepo->setName($request->getName())
+            ->setDeps($request->getDeps())
+            ->setDepsDev($request->getDepsDev())
+            ->setAutoload(Autoload::fromArray(['psr-4' => [$request->getNamespace().'\\' => 'src'.DIRECTORY_SEPARATOR]]));
+
+        $this->writeMonorepo($monorepo);
+
+        if(!file_exists($monorepo->getPath())){
+            throw new \RuntimeException('Unable to create monorepo.json. Try again');
+        }
+
+        $io->write(sprintf('<info>Package %s generated</info>', $monorepo->getName()));
+
+        $this->build($context);
+    }
+
+    /**
+     * Returns the current root monorepo
+     *
+     * @param Context $context
+     * @return Monorepo
+     */
+    public function rootMonorepo($context)
+    {
+        $rootDir = $context->getRootDirectory();
+        $rootMonorepoPath = $this->getRootMonorepoPath($rootDir);
+
+        if(!$this->isMonorepoInitialized($rootMonorepoPath))
+        {
+            throw new \RuntimeException('Monorepo project not initialized. Run monorepo:init before');
+        }
+
+        return $this->loadMonorepo($rootMonorepoPath);
     }
 
     /**

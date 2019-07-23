@@ -28,6 +28,18 @@ class DependencyTreeLoader
     private $fs;
 
     /**
+     * Facility method to create DependencyTreeLoader
+     *
+     * @param MonorepoLoader|null $monorepoLoader
+     * @param Filesystem|null $fs
+     * @return DependencyTreeLoader
+     */
+    public static function create($monorepoLoader = null, $fs = null)
+    {
+        return new self($monorepoLoader, $fs);
+    }
+
+    /**
      * DependencyTreeLoader constructor.
      * @param MonorepoLoader|null $monorepoLoader
      * @param Filesystem|null $fs
