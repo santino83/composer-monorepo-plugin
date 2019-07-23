@@ -10,6 +10,7 @@ namespace Monorepo\Command;
 
 
 use Monorepo\Console;
+use Monorepo\Context;
 use Monorepo\ContextBuilder;
 use Monorepo\Loader\DependencyTreeLoader;
 use Monorepo\Model\Monorepo;
@@ -27,6 +28,11 @@ use Symfony\Component\Console\Question\Question;
 
 class AddCommand extends BaseCommand
 {
+
+    /**
+     * @var Console
+     */
+    private $console;
 
     protected function configure()
     {
@@ -49,51 +55,158 @@ class AddCommand extends BaseCommand
         $packageDir = $input->getOption('package-dir');
         $name = $input->getArgument('name');
 
+        $this->console = new Console();
+
         $context = ContextBuilder::create()
             ->withIo(new ConsoleIO($input, $output, $this->getHelperSet()))
             ->build(getcwd(), $optimize);
 
-        $console = new Console();
-
-        $root = $console->rootMonorepo($context);
-
-        if (!$namespace) {
-            $namespace = StringUtils::toNamespace($name);
-            if (strpos($namespace, "\\") === FALSE) {
-                $namespace = $root->getNamespace() . '\\' . $namespace;
-            }
-        }
+        $root = $this->console->rootMonorepo($context);
 
         $request = new AddMonorepoRequest();
         $request->setNamespace($namespace)
             ->setPackageDir($packageDir)
             ->setName($name);
 
-        if (!$noInteraction) {
-            $proceed = $this->askInformations($request, $root, $input, $output);
-            if (!$proceed) {
-                return;
-            }
-        }else{
-            if(!$packageDir){
-                $packageDir = $root->getPackageDirs()[0] . DIRECTORY_SEPARATOR . StringUtils::toDirectoryPath($name);
-                $request->setPackageDir($packageDir);
-            }
+        if($noInteraction){
+            $this->executeNoInteraction($context, $request, $root, $input, $output);
+            return;
         }
 
-        $context->setRequest($request);
-        $console->add($context);
+        $this->executeWithInteraction($context, $request, $root, $input, $output);
     }
 
     /**
+     * Adds the new package with prompts for data
+     *
+     * @param Context $context
      * @param AddMonorepoRequest $request
      * @param Monorepo $root
      * @param InputInterface $input
      * @param OutputInterface $output
+     */
+    protected function executeWithInteraction(Context $context, AddMonorepoRequest $request, Monorepo $root, InputInterface $input, OutputInterface $output)
+    {
+        $this->askForNamespace($request, $root, $input, $output);
+
+        $this->askForPackageDir($request, $root, $input, $output);
+
+        $this->askForDependencies($request, $root, $input, $output);
+
+        $this->confirmPackageName($request, $input, $output);
+
+        if($this->confirmGenerate($request, $input, $output))
+        {
+            $this->doExecute($context, $request);
+        }
+    }
+
+    /**
+     * Adds the new package without prompts for data
+     *
+     * @param Context $context
+     * @param AddMonorepoRequest $request
+     * @param Monorepo $root
+     * @param InputInterface $input
+     * @param OutputInterface $output
+     */
+    protected function executeNoInteraction(Context $context, AddMonorepoRequest $request, Monorepo $root, InputInterface $input, OutputInterface $output)
+    {
+        $request->setNamespace($this->getDefaultNS($request, $root))
+            ->setPackageDir($this->getDefaultPackageDir($request, $root));
+
+        if(!$request->getNamespace()){
+            throw new \RuntimeException('Invalid namespace provided');
+        }
+
+        if(!$request->getPackageDir()){
+            throw new \RuntimeException('Invalid package dir provided');
+        }
+
+        $this->doExecute($context, $request);
+    }
+
+    /**
+     * Adds the new package
+     *
+     * @param Context $context
+     * @param AddMonorepoRequest $request
+     */
+    private function doExecute(Context $context, AddMonorepoRequest $request)
+    {
+        $context->setRequest($request);
+
+        $this->console->add($context);
+    }
+
+    /**
+     * Confirms package generation
+     *
+     * @param AddMonorepoRequest $request
+     * @param InputInterface $input
+     * @param OutputInterface $output
      * @return bool
      */
-    protected function askInformations(AddMonorepoRequest $request, Monorepo $root, InputInterface $input, OutputInterface $output)
+    private function confirmGenerate(AddMonorepoRequest $request, InputInterface $input, OutputInterface $output)
     {
+        $helper = $this->getHelper('question');
+        /**@var $helper \Symfony\Component\Console\Helper\QuestionHelper */
+
+        $preview = json_encode([
+            'name' => $request->getName(),
+            'deps' => $request->getDeps(),
+            'deps-dev' => $request->getDepsDev(),
+            'autoload' => ['psr-4' => [$request->getNamespace() . '\\' => 'src' . DIRECTORY_SEPARATOR]]
+        ], JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
+
+        $finalPath = $request->getPackageDir();
+
+        $question = new ConfirmationQuestion(
+            sprintf("<info>Do you want to create the following monorepo:</info> \n\n%s\n\n<info>into:</info> %s <info>? [</info>Y<info>/n]</info> ", $preview, $finalPath),
+            true);
+
+        return (bool)$helper->ask($input, $output, $question);
+    }
+
+    /**
+     * Confirms package name
+     *
+     * @param AddMonorepoRequest $request
+     * @param InputInterface $input
+     * @param OutputInterface $output
+     */
+    private function confirmPackageName(AddMonorepoRequest $request, InputInterface $input, OutputInterface $output)
+    {
+        $helper = $this->getHelper('question');
+        /**@var $helper \Symfony\Component\Console\Helper\QuestionHelper */
+
+        if (StringUtils::toPackageName($request->getNamespace()) !== StringUtils::toPackageName($request->getName())) {
+            $question = new ChoiceQuestion('<info>Please select the correct name for the monorepo: [</info>0<info>]</info>',
+                [
+                    StringUtils::toPackageName($request->getNamespace()),
+                    StringUtils::toPackageName($request->getName())
+                ],
+                0
+            );
+            $request->setName($helper->ask($input, $output, $question));
+        } else {
+            $request->setName(StringUtils::toPackageName($request->getName()));
+        }
+    }
+
+    /**
+     * Asks for Dependencies ( require and require-dev )
+     *
+     * @param AddMonorepoRequest $request
+     * @param Monorepo $root
+     * @param InputInterface $input
+     * @param OutputInterface $output
+     */
+    private function askForDependencies(AddMonorepoRequest $request, Monorepo $root, InputInterface $input, OutputInterface $output)
+    {
+        $helper = $this->getHelper('question');
+        /**@var $helper \Symfony\Component\Console\Helper\QuestionHelper */
+
         $dependencyTree = DependencyTreeLoader::create()->load($root);
 
         $dependencies = array_merge(
@@ -102,45 +215,45 @@ class AddCommand extends BaseCommand
             array_keys($root->getRequireDev()->getArrayCopy())
         );
 
+        $depQuestion = new ConfirmationQuestion('<info>Do you want to interactive add dependencies? [y/</info>N</info>]</info> ', false);
+        if ($helper->ask($input, $output, $depQuestion)) {
+            $this->chooseDependencies($request, $dependencies, $input, $output, false);
+        }
+
+        // ASK TO CHOOSE DEV DEPENDENCIES
+        $depDevQuestion = new ConfirmationQuestion('<info>Do you want to interactive add development dependencies? [y/</info>N<info>]</info> ', false);
+        if ($helper->ask($input, $output, $depDevQuestion)) {
+            $this->chooseDependencies($request, $dependencies, $input, $output, true);
+        }
+
+    }
+
+    /**
+     * Asks for Package Dir
+     *
+     * @param AddMonorepoRequest $request
+     * @param Monorepo $root
+     * @param InputInterface $input
+     * @param OutputInterface $output
+     */
+    private function askForPackageDir(AddMonorepoRequest $request, Monorepo $root, InputInterface $input, OutputInterface $output)
+    {
         $helper = $this->getHelper('question');
         /**@var $helper \Symfony\Component\Console\Helper\QuestionHelper */
 
-        // ASK FOR NAMESPACE
+        $dfPackageDir = $this->getDefaultPackageDir($request, $root);
 
-        $dedaultNS = $request->getNamespace();
-
-        $nsQuestion = new Question(sprintf("<info>Please enter the namespace of the monorepo %s:</info> ", $dedaultNS ? '[</info>' . $dedaultNS . '<info>]' : ''), $dedaultNS);
-        $nsQuestion->setNormalizer(function ($value) {
-            return strtolower(trim($value));
-        });
-        $nsQuestion->setValidator(function ($answer) {
-            if (!is_string($answer) || !$answer) {
-                throw new \RuntimeException('Please insert the namespace of the repo');
-            }
-
-            return StringUtils::toNamespace($answer);
-        });
-        $nsQuestion->setMaxAttempts(2);
-        $request->setNamespace($helper->ask($input, $output, $nsQuestion));
-
-        // ASK FOR PACKAGE DIR
-
-        $dfPackageDir = $request->getPackageDir();
-        if(!$dfPackageDir){
-            $dfPackageDir = $root->getPackageDirs()[0].DIRECTORY_SEPARATOR.StringUtils::toDirectoryPath($request->getNamespace());
-        }
-
-        $pdQuestion = new Question(
+        $question = new Question(
             sprintf(
                 "<info>Please enter the directory of the monorepo: %s</info> ",
                 '[</info>' . $dfPackageDir . '<info>]'
             ),
             $dfPackageDir
         );
-        $pdQuestion->setNormalizer(function ($string) {
+        $question->setNormalizer(function ($string) {
             return trim($string);
         });
-        $pdQuestion->setValidator(function ($answer) use ($root) {
+        $question->setValidator(function ($answer) use ($root) {
 
             $packageDirs = $root->getPackageDirs();
 
@@ -164,54 +277,54 @@ class AddCommand extends BaseCommand
 
             throw new \RuntimeException(sprintf('Monorepo directory must be in a subfolder of these folders: %s . Invalid path %s', implode(',', $packageDirs), $answer));
         });
-        $pdQuestion->setMaxAttempts(6);
+        $question->setMaxAttempts(6);
 
+        $request->setPackageDir($helper->ask($input, $output, $question));
 
-        $request->setPackageDir($helper->ask($input, $output, $pdQuestion));
-
-        // ASK TO CHOOSE DEPENDENCIES
-
-        $depQuestion = new ConfirmationQuestion('<info>Do you want to interactive add dependencies? [y/</info>N</info>]</info> ', false);
-        if ($helper->ask($input, $output, $depQuestion)) {
-            $this->chooseDependencies($request, $dependencies, $input, $output, false);
-        }
-
-        // ASK TO CHOOSE DEV DEPENDENCIES
-        $depDevQuestion = new ConfirmationQuestion('<info>Do you want to interactive add development dependencies? [y/</info>N<info>]</info> ', false);
-        if ($helper->ask($input, $output, $depDevQuestion)) {
-            $this->chooseDependencies($request, $dependencies, $input, $output, true);
-        }
-
-        if (StringUtils::toPackageName($request->getNamespace()) !== StringUtils::toPackageName($request->getName())) {
-            $nameQuestion = new ChoiceQuestion('<info>Please select the correct name for the monorepo: [</info>0<info>]</info>',
-                [
-                    StringUtils::toPackageName($request->getNamespace()),
-                    StringUtils::toPackageName($request->getName())
-                ],
-                0
-            );
-            $request->setName($helper->ask($input, $output, $nameQuestion));
-        } else {
-            $request->setName(StringUtils::toPackageName($request->getName()));
-        }
-
-        // CONFIRM TO GENERATE
-        $preview = json_encode([
-            'name' => $request->getName(),
-            'deps' => $request->getDeps(),
-            'deps-dev' => $request->getDepsDev(),
-            'autoload' => ['psr-4' => [$request->getNamespace() . '\\' => 'src' . DIRECTORY_SEPARATOR]]
-        ], JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
-
-        $finalPath = $request->getPackageDir();
-
-        $question = new ConfirmationQuestion(sprintf("<info>Do you want to create the following monorepo:</info> \n\n%s\n\n<info>into:</info> %s <info>? [</info>Y<info>/n]</info> ", $preview, $finalPath), true);
-        return (bool)$helper->ask($input, $output, $question);
     }
 
+    /**
+     * Asks for Namespace
+     *
+     * @param AddMonorepoRequest $request
+     * @param Monorepo $root
+     * @param InputInterface $input
+     * @param OutputInterface $output
+     */
+    private function askForNamespace(AddMonorepoRequest $request, Monorepo $root, InputInterface $input, OutputInterface $output)
+    {
+        $helper = $this->getHelper('question');
+        /**@var $helper \Symfony\Component\Console\Helper\QuestionHelper */
+
+        $defaultNS = $this->getDefaultNS($request, $root);
+
+        $question = new Question(sprintf("<info>Please enter the namespace of the monorepo %s:</info> ", $defaultNS ? '[</info>' . $defaultNS . '<info>]' : ''), $defaultNS);
+        $question->setNormalizer(function ($value) {
+            return strtolower(trim($value));
+        });
+        $question->setValidator(function ($answer) {
+            if (!is_string($answer) || !$answer) {
+                throw new \RuntimeException('Please insert the namespace of the repo');
+            }
+
+            return StringUtils::toNamespace($answer);
+        });
+        $question->setMaxAttempts(2);
+        $request->setNamespace($helper->ask($input, $output, $question));
+    }
+
+    /**
+     * Chooses Dependencies
+     *
+     * @param AddMonorepoRequest $request
+     * @param array $dependencies
+     * @param InputInterface $input
+     * @param OutputInterface $output
+     * @param bool $dev
+     */
     private function chooseDependencies(AddMonorepoRequest $request, array $dependencies, InputInterface $input, OutputInterface $output, $dev = false)
     {
-        $choosed = [];
+        $choose = [];
 
         $helper = $this->getHelper('question');
         /**@var $helper \Symfony\Component\Console\Helper\QuestionHelper */
@@ -238,14 +351,56 @@ class AddCommand extends BaseCommand
         $question->setMaxAttempts(6);
 
         while (($answer = $helper->ask($input, $output, $question)) !== null) {
-            $choosed[] = $answer;
+            $choose[] = $answer;
         }
 
         if ($dev) {
-            $request->setDepsDev($choosed);
+            $request->setDepsDev($choose);
         } else {
-            $request->setDeps($choosed);
+            $request->setDeps($choose);
         }
 
     }
+
+    /**
+     * Calculates default namespace based on the request
+     *
+     * @param AddMonorepoRequest $request
+     * @param Monorepo $root
+     * @return string
+     */
+    private function getDefaultNS(AddMonorepoRequest $request, Monorepo $root)
+    {
+        $defaultNS = $request->getNamespace();
+
+        if (!$defaultNS) {
+            $namespace = StringUtils::toNamespace($request->getName());
+            if (strpos($namespace, "\\") === FALSE) {
+                $defaultNS = $root->getNamespace() . '\\' . $namespace;
+            }
+        }
+
+        return $defaultNS;
+    }
+
+    /**
+     * Calculates default package dir based on the request
+     *
+     * @param AddMonorepoRequest $request
+     * @param Monorepo $root
+     * @return string
+     */
+    private function getDefaultPackageDir(AddMonorepoRequest $request, Monorepo $root)
+    {
+        $dfPackageDir = $request->getPackageDir();
+
+        if(!$dfPackageDir){
+            $dfPackageDir = $root->getPackageDirs()[0].
+                DIRECTORY_SEPARATOR.
+                StringUtils::toDirectoryPath($request->getNamespace() ? $request->getNamespace() : $request->getName());
+        }
+
+        return $dfPackageDir;
+    }
+
 }
