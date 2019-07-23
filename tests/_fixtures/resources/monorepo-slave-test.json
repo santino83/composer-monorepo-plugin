@@ -1,0 +1,35 @@
+{
+    "name": "circlecrm/another",
+    "root": false,
+    "deps": [
+        "vendor/doctrine/common"
+    ],
+    "deps-dev": [
+        "vendor/phpunit/phpunit"
+    ],
+    "autoload": {
+        "classmap": [],
+        "files": [],
+        "psr-0": {
+            "CircleCRM/Another": "src/",
+            "SymfonyStandard": "app/"
+        }
+    },
+    "autoload-dev": {
+        "classmap": [
+            "src/foo"
+        ],
+        "files": [],
+        "psr-4": {
+            "Baz": "src/baz"
+        }
+    },
+    "include-path": [
+        "src/foo/bar"
+    ],
+    "bin": [
+        "src/foo/bar/bin/binary.bin"
+    ],
+    "require": {},
+    "require-dev": {}
+}

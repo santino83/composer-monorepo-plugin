@@ -10,12 +10,13 @@ namespace Monorepo;
 
 
 use Composer\Composer;
+use Composer\EventDispatcher\EventDispatcher;
 use Composer\Installer\InstallationManager;
 use Composer\IO\IOInterface;
 use Composer\IO\NullIO;
 use Monorepo\Composer\AutoloadGenerator;
-use Monorepo\Composer\EventDispatcher;
 use Monorepo\Composer\MonorepoInstaller;
+use Monorepo\Request\RequestInterface;
 
 class ContextBuilder
 {
@@ -44,6 +45,11 @@ class ContextBuilder
      * @var InstallationManager
      */
     private $installationManager;
+
+    /**
+     * @var RequestInterface
+     */
+    private $request;
 
     private function __construct()
     {
@@ -134,6 +140,16 @@ class ContextBuilder
     }
 
     /**
+     * @param RequestInterface $request
+     * @return $this
+     */
+    public function withRequest($request)
+    {
+        $this->request = $request;
+        return $this;
+    }
+
+    /**
      * @param string $rootDirectory
      * @param bool $optimize
      * @param bool $noDevMode
@@ -145,7 +161,8 @@ class ContextBuilder
         $context = new Context($rootDirectory, $optimize, $noDevMode);
         $context->setGenerator($this->getGenerator())
             ->setIo($this->getIo())
-            ->setInstallationManager($this->getInstallationManager());
+            ->setInstallationManager($this->getInstallationManager())
+            ->setRequest($this->request);
 
         $context->getGenerator()->setDevMode(!$context->isNoDevMode());
 
@@ -179,7 +196,7 @@ class ContextBuilder
     /**
      * @return MonorepoInstaller
      */
-    private function getMonorepoInstaller()
+    private function getInstaller()
     {
         if(!$this->monorepoInstaller){
             $this->monorepoInstaller = new MonorepoInstaller();
@@ -207,7 +224,7 @@ class ContextBuilder
     {
         if(!$this->installationManager){
             $this->installationManager = new InstallationManager();
-            $this->installationManager->addInstaller($this->getMonorepoInstaller());
+            $this->installationManager->addInstaller($this->getInstaller());
         }
 
         return $this->installationManager;

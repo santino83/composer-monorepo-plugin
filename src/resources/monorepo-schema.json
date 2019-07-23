@@ -35,6 +35,21 @@
         "description": "development package names with their unique relative path in the project"
       }
     },
+    "package-dirs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "description": "Relative directory paths where to search for monorepo submodules. Default: packages,src,lib paths"
+      }
+    },
+    "vendor-dir": {
+      "type": "string",
+      "description": "the composer vendor dir (only for root monorepo)"
+    },
+    "namespace": {
+      "type": "string",
+      "description": "The global project base namespace (only for root monorepo)"
+    },
     "autoload": {
       "type": "object",
       "description": "Description of how the package can be autoloaded.",

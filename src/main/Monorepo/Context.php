@@ -13,6 +13,7 @@ use Composer\Installer\InstallationManager;
 use Composer\IO\IOInterface;
 use Monorepo\Composer\AutoloadGenerator;
 use Monorepo\Composer\Util\Filesystem;
+use Monorepo\Request\RequestInterface;
 
 class Context
 {
@@ -53,6 +54,11 @@ class Context
      * @var Filesystem
      */
     private $filesystem;
+
+    /**
+     * @var RequestInterface
+     */
+    private $request;
 
     /**
      * Context constructor.
@@ -160,6 +166,24 @@ class Context
     public function setFilesystem($filesystem)
     {
         $this->filesystem = $filesystem;
+        return $this;
+    }
+
+    /**
+     * @return RequestInterface
+     */
+    public function getRequest()
+    {
+        return $this->request;
+    }
+
+    /**
+     * @param RequestInterface $request
+     * @return Context
+     */
+    public function setRequest($request)
+    {
+        $this->request = $request;
         return $this;
     }
 

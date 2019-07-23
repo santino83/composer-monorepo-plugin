@@ -1,5 +1,9 @@
 {
+    "name": "example-simple/bar",
     "autoload": {
         "psr-0": {"Bar\\": "src/"}
-    }
+    },
+    "deps": [
+        "foo/baz"
+    ]
 }

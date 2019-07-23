@@ -88,6 +88,18 @@ class MonorepoInstalledRepository implements InstalledRepositoryInterface
     }
 
     /**
+     * Adds alias for the package (eg: when a package provide or replace another package)
+     *
+     * @param string $alias
+     * @param string $packageName
+     * @param string $version
+     */
+    public function addAlias($alias, $packageName, $version = "*")
+    {
+        $this->packages[$alias] = $this->findPackage($packageName, $version);
+    }
+
+    /**
      * Adds package to the repository.
      *
      * @param PackageInterface $package package instance

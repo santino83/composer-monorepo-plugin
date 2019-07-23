@@ -1,0 +1,19 @@
+{
+  "name": "example/package-c",
+  "deps": [
+    "example/package-b",
+    "voiptech/vpt-common-bundle",
+    "voiptech/vpt-menu-bundle",
+    "voiptech/vpt-pgsql-bundle",
+    "voiptech/vpt-widget-bundle",
+    "willdurand/hateoas-bundle"
+  ],
+  "deps-dev": [
+    "phpunit/phpunit"
+  ],
+  "autoload": {
+    "psr-0": {
+      "Example\\PackageC\\": "src/"
+    }
+  }
+}

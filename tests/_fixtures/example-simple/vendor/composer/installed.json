@@ -1,0 +1,14 @@
+[
+    {
+        "name": "foo/baz",
+        "autoload": {
+            "files": ["bin/baz"]
+        }
+    },
+    {
+        "name": "bar/baz",
+        "autoload": {
+            "files": ["bin/fooz"]
+        }
+    }
+]

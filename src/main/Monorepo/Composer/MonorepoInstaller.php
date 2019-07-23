@@ -73,6 +73,10 @@ class MonorepoInstaller implements InstallerInterface
      */
     public function getInstallPath(PackageInterface $package)
     {
-        return $package->getPrettyName(); // Monorepo package names are directory paths.
+        if(!($package instanceof MonorepoPackage)){
+            throw new \RuntimeException(sprintf('Package %s must be instance of %s', $package->getName(), MonorepoPackage::class));
+        }
+
+        return $package->getRelativePathInstallation();
     }
 }

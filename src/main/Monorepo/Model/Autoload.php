@@ -44,6 +44,37 @@ class Autoload
     }
 
     /**
+     * @param array $source
+     * @return Autoload
+     */
+    public static function fromArray(array $source)
+    {
+        $instance = new self();
+
+        if (isset($source['classmap'])) {
+            $instance->setClassmap((array)$source['classmap']);
+        }
+
+        if (isset($source['files'])) {
+            $instance->setFiles((array)$source['files']);
+        }
+
+        if (isset($source['psr-0'])) {
+            foreach ((array)$source['psr-0'] as $namespace => $directory) {
+                $instance->getPsr0()[$namespace] = $directory;
+            }
+        }
+
+        if (isset($source['psr-4'])) {
+            foreach ((array)$source['psr-4'] as $namespace => $directory) {
+                $instance->getPsr4()[$namespace] = $directory;
+            }
+        }
+
+        return $instance;
+    }
+
+    /**
      * @return ArrayObject
      */
     public function getPsr0()
@@ -57,6 +88,14 @@ class Autoload
     public function getPsr4()
     {
         return $this->psr4;
+    }
+
+    public function isEmpty()
+    {
+        return !$this->classmap &&
+            !$this->files &&
+            $this->psr0->count() === 0 &&
+            $this->psr4->count() === 0;
     }
 
     /**
@@ -102,56 +141,36 @@ class Autoload
      */
     public function toArray()
     {
+        if($this->isEmpty()){
+            // TODO: force json_encode to render an object. Do better
+            return [
+                'classmap' => $this->classmap
+            ];
+        }
 
-        $return = [
-          'classmap' => $this->classmap,
-          'files' => $this->files
-        ];
+        $return = [];
 
-        if(count($this->psr0)>0){
-            foreach($this->psr0 as $namespace => $directory){
+        if($this->classmap){
+            $return['classmap'] = $this->classmap;
+        }
+
+        if($this->files){
+            $return['files'] = $this->files;
+        }
+
+        if ($this->psr0->count() > 0) {
+            foreach ($this->psr0 as $namespace => $directory) {
                 $return['psr-0'][$namespace] = $directory;
             }
         }
 
-        if(count($this->psr4)>0){
-            foreach($this->psr4 as $namespace => $directory){
+        if ($this->psr4->count() > 0) {
+            foreach ($this->psr4 as $namespace => $directory) {
                 $return['psr-4'][$namespace] = $directory;
             }
         }
 
         return $return;
-    }
-
-    /**
-     * @param array $source
-     * @return Autoload
-     */
-    public static function fromArray(array $source)
-    {
-        $instance = new self();
-
-        if(isset($source['classmap'])){
-            $instance->setClassmap((array)$source['classmap']);
-        }
-
-        if(isset($source['files'])){
-            $instance->setFiles((array)$source['files']);
-        }
-
-        if(isset($source['psr-0'])){
-            foreach((array)$source['psr-0'] as $namespace => $directory){
-                $instance->getPsr0()[$namespace] = $directory;
-            }
-        }
-
-        if(isset($source['psr-4'])){
-            foreach((array)$source['psr-4'] as $namespace => $directory){
-                $instance->getPsr4()[$namespace] = $directory;
-            }
-        }
-
-        return $instance;
     }
 
 }

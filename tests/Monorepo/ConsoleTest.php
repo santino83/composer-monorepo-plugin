@@ -37,6 +37,16 @@ class ConsoleTest extends \PHPUnit_Framework_TestCase
         $this->fixtureDir = $this->fs->path(dirname(__FILE__),'..','_fixtures');
     }
 
+    public function testBuild()
+    {
+        $path = $this->fs->path($this->fixtureDir, 'example-tree');
+        $context = ContextBuilder::create()->build($path);
+
+        $console = new Console($this->loader);
+        $console->build($context);
+
+    }
+/*
     public function testInitOK()
     {
         $path = $this->fs->path($this->fixtureDir, 'example-init');
@@ -48,11 +58,11 @@ class ConsoleTest extends \PHPUnit_Framework_TestCase
         $this->assertTrue(file_exists($this->fs->path($path, 'monorepo.json')));
         unlink($this->fs->path($path, 'monorepo.json'));
     }
-
+*/
     /**
      * @expectedException \RuntimeException
      */
-    public function testInitNoComposer()
+/*    public function testInitNoComposer()
     {
         $path = $this->fs->path($this->fixtureDir, 'example-init-invalid-composer');
 
@@ -61,11 +71,11 @@ class ConsoleTest extends \PHPUnit_Framework_TestCase
         $console = new Console($this->loader);
         $console->init($context);
     }
-
+*/
     /**
      * @expectedException \RuntimeException
      */
-    public function testAlreadyInitialized()
+/*    public function testAlreadyInitialized()
     {
         $path = $this->fs->path($this->fixtureDir, 'example-init-invalid-monorepo');
 
@@ -74,5 +84,5 @@ class ConsoleTest extends \PHPUnit_Framework_TestCase
         $console = new Console($this->loader);
         $console->init($context);
     }
-
+*/
 }
