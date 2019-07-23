@@ -137,15 +137,18 @@ class Autoload
     /**
      * Converts this object into an array
      *
-     * @return array
+     * @param bool $useObjectsOnEmpty
+     * @return array|\stdClass
      */
-    public function toArray()
+    public function toArray($useObjectsOnEmpty = false)
     {
+        if($this->isEmpty() && $useObjectsOnEmpty){
+
+            return new \stdClass();
+        }
+
         if($this->isEmpty()){
-            // TODO: force json_encode to render an object. Do better
-            return [
-                'classmap' => $this->classmap
-            ];
+            return ['classmap' => []];
         }
 
         $return = [];

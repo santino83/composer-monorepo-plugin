@@ -72,6 +72,7 @@ class InitCommand extends BaseCommand
 
         $context = ContextBuilder::create()
             ->withIo(new ConsoleIO($input, $output, $this->getHelperSet()))
+            ->withComposerConfig($this->getComposer()->getConfig())
             ->withRequest($request)
             ->build(getcwd(), $optimize);
 

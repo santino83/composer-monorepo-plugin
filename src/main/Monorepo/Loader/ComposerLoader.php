@@ -23,12 +23,19 @@ class ComposerLoader
     private $factory;
 
     /**
+     * @var IOInterface
+     */
+    private $io;
+
+    /**
      * ComposerLoader constructor.
      * @param Factory|null $factory
+     * @param IOInterface|null $io
      */
-    public function __construct($factory = null)
+    public function __construct($factory = null, IOInterface $io = null)
     {
         $this->factory = $factory ? $factory : new Factory();
+        $this->io = $io ? $io : new NullIO();
     }
 
     /**
@@ -49,7 +56,7 @@ class ComposerLoader
     public function loadComposer($path = null, $io = null)
     {
         $localConfigPath = file_exists($path) ? $path : null;
-        $_io = $io ? $io : new NullIO();
+        $_io = $io ? $io : $this->io;
 
         return $this->factory->createComposer($_io, $localConfigPath);
     }

@@ -31,6 +31,7 @@ class BuildCommand extends BaseCommand
 
         $context = ContextBuilder::create()
             ->withIo(new ConsoleIO($input, $output, $this->getHelperSet()))
+            ->withComposerConfig($this->getComposer()->getConfig())
             ->build(getcwd(), $optimize, $noDevMode);
 
         $console = new Console();

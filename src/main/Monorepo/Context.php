@@ -9,8 +9,12 @@
 namespace Monorepo;
 
 
+use Composer\Config;
 use Composer\Installer\InstallationManager;
 use Composer\IO\IOInterface;
+use Composer\Package\Version\VersionGuesser;
+use Composer\Util\ProcessExecutor;
+use Composer\Semver\VersionParser as SemverVersionParser;
 use Monorepo\Composer\AutoloadGenerator;
 use Monorepo\Composer\Util\Filesystem;
 use Monorepo\Request\RequestInterface;
@@ -59,6 +63,26 @@ class Context
      * @var RequestInterface
      */
     private $request;
+
+    /**
+     * @var Config
+     */
+    private $composerConfig;
+
+    /**
+     * @var ProcessExecutor
+     */
+    private $processExecutor;
+
+    /**
+     * @var SemverVersionParser
+     */
+    private $versionParser;
+
+    /**
+     * @var VersionGuesser
+     */
+    private $versionGuesser;
 
     /**
      * Context constructor.
@@ -184,6 +208,78 @@ class Context
     public function setRequest($request)
     {
         $this->request = $request;
+        return $this;
+    }
+
+    /**
+     * @return Config
+     */
+    public function getComposerConfig()
+    {
+        return $this->composerConfig;
+    }
+
+    /**
+     * @param Config $composerConfig
+     * @return Context
+     */
+    public function setComposerConfig($composerConfig)
+    {
+        $this->composerConfig = $composerConfig;
+        return $this;
+    }
+
+    /**
+     * @return ProcessExecutor
+     */
+    public function getProcessExecutor()
+    {
+        return $this->processExecutor;
+    }
+
+    /**
+     * @param ProcessExecutor $processExecutor
+     * @return Context
+     */
+    public function setProcessExecutor($processExecutor)
+    {
+        $this->processExecutor = $processExecutor;
+        return $this;
+    }
+
+    /**
+     * @return SemverVersionParser
+     */
+    public function getVersionParser()
+    {
+        return $this->versionParser;
+    }
+
+    /**
+     * @param SemverVersionParser $versionParser
+     * @return Context
+     */
+    public function setVersionParser($versionParser)
+    {
+        $this->versionParser = $versionParser;
+        return $this;
+    }
+
+    /**
+     * @return VersionGuesser
+     */
+    public function getVersionGuesser()
+    {
+        return $this->versionGuesser;
+    }
+
+    /**
+     * @param VersionGuesser $versionGuesser
+     * @return Context
+     */
+    public function setVersionGuesser($versionGuesser)
+    {
+        $this->versionGuesser = $versionGuesser;
         return $this;
     }
 
