@@ -40,10 +40,15 @@ class InitCommand extends BaseCommand
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $optimize = (bool)$input->getOption('optimize-autoloader');
+        $noInteraction = (bool)$input->getOption('no-interaction');
 
         $namespace = $input->getOption('namespace');
 
         if(!$namespace){
+
+            if($noInteraction){
+               throw new \RuntimeException('Please enter the base namespace');
+            }
 
             $currentBase = StringUtils::toPascal(basename(getcwd()));
             $question = new Question(sprintf('<info>Please insert the global base namespace for the project: [ %s ]</info> ', $currentBase), $currentBase);
