@@ -139,6 +139,16 @@ class DependencyTree
     }
 
     /**
+     * @param string $monorepoName
+     * @return bool
+     */
+    public function has($monorepoName)
+    {
+        $this->ensureBuilt();
+        return array_key_exists($monorepoName, $this->monorepos);
+    }
+
+    /**
      * @param bool $excludeRoot default true
      * @return array $monorepoName => $dependencies string[]
      */

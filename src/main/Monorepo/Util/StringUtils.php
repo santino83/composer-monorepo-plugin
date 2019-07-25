@@ -16,7 +16,7 @@ class StringUtils
 
     public static function toDirectoryPath($string)
     {
-        return implode(DIRECTORY_SEPARATOR, array_map(StringUtils::class.'::toKebab', preg_split('@[\\\\/]@i', $string)));
+        return implode(DIRECTORY_SEPARATOR, array_map(StringUtils::class.'::toKebab', array_map('strtolower', preg_split('@[\\\\/]@i', $string))));
     }
 
     public static function toNamespace($string)
@@ -26,7 +26,7 @@ class StringUtils
 
     public static function toPackageName($string)
     {
-        return implode('/', array_map(StringUtils::class.'::toKebab', preg_split('@[\\\\/]@i', $string)));
+        return implode('/', array_map(StringUtils::class.'::toKebab', array_map('strtolower', preg_split('@[\\\\/]@i', $string))));
     }
 
     public static function toCamel($string)

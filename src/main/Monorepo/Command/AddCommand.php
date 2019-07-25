@@ -12,6 +12,7 @@ namespace Monorepo\Command;
 use Monorepo\Console;
 use Monorepo\Context;
 use Monorepo\ContextBuilder;
+use Monorepo\Dependency\DependencyTree;
 use Monorepo\Loader\DependencyTreeLoader;
 use Monorepo\Model\Monorepo;
 use Monorepo\Request\AddMonorepoRequest;
@@ -33,6 +34,11 @@ class AddCommand extends BaseCommand
      * @var Console
      */
     private $console;
+
+    /**
+     * @var DependencyTree
+     */
+    private $dependencyTree;
 
     protected function configure()
     {
@@ -63,6 +69,7 @@ class AddCommand extends BaseCommand
             ->build(getcwd(), $optimize);
 
         $root = $this->console->rootMonorepo($context);
+        $this->dependencyTree = DependencyTreeLoader::create()->load($root);
 
         $request = new AddMonorepoRequest();
         $request->setNamespace($namespace)
@@ -92,9 +99,11 @@ class AddCommand extends BaseCommand
 
         $this->askForPackageDir($request, $root, $input, $output);
 
-        $this->askForDependencies($request, $root, $input, $output);
-
         $this->confirmPackageName($request, $input, $output);
+
+        $this->checkExistance($request);
+
+        $this->askForDependencies($request, $root, $input, $output);
 
         if($this->confirmGenerate($request, $input, $output))
         {
@@ -124,6 +133,8 @@ class AddCommand extends BaseCommand
             throw new \RuntimeException('Invalid package dir provided');
         }
 
+        $this->checkExistance($request);
+
         $this->doExecute($context, $request);
     }
 
@@ -138,6 +149,21 @@ class AddCommand extends BaseCommand
         $context->setRequest($request);
 
         $this->console->add($context);
+    }
+
+    /**
+     * Checks if doesn't exist another package with same name
+     *
+     * @param AddMonorepoRequest $request
+     * @return bool
+     */
+    private function checkExistance(AddMonorepoRequest $request)
+    {
+        if($this->dependencyTree->has($request->getName())){
+            throw new \RuntimeException(sprintf('Another package exists with name %s', $request->getName()));
+        }
+
+        return true;
     }
 
     /**
@@ -208,10 +234,8 @@ class AddCommand extends BaseCommand
         $helper = $this->getHelper('question');
         /**@var $helper \Symfony\Component\Console\Helper\QuestionHelper */
 
-        $dependencyTree = DependencyTreeLoader::create()->load($root);
-
         $dependencies = array_merge(
-            array_keys($dependencyTree->getDependencies()),
+            array_keys($this->dependencyTree->getDependencies()),
             array_keys($root->getRequire()->getArrayCopy()),
             array_keys($root->getRequireDev()->getArrayCopy())
         );
@@ -376,8 +400,11 @@ class AddCommand extends BaseCommand
 
         if (!$defaultNS) {
             $namespace = StringUtils::toNamespace($request->getName());
+
             if (strpos($namespace, "\\") === FALSE) {
                 $defaultNS = $root->getNamespace() . '\\' . $namespace;
+            }else{
+                $defaultNS = $namespace;
             }
         }
 
