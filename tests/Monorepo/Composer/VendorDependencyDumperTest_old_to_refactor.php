@@ -17,7 +17,9 @@ use Monorepo\Loader\DependencyTreeLoader;
 use Monorepo\Loader\MonorepoLoader;
 use PHPUnit\Framework\TestCase;
 
-class VendorDependencyDumperTest extends TestCase
+//TODO: move tests in correct new classes
+
+class VendorDependencyDumperTestOldtorefactor extends TestCase
 {
     /**
      * @var MonorepoLoader
