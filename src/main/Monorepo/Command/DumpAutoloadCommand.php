@@ -11,7 +11,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Composer\IO\ConsoleIO;
 use Composer\Command\BaseCommand;
 
-class BuildCommand extends BaseCommand
+class DumpAutoloadCommand extends BaseCommand
 {
     protected function configure()
     {
