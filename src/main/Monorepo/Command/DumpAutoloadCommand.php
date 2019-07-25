@@ -35,6 +35,6 @@ class DumpAutoloadCommand extends BaseCommand
             ->build(getcwd(), $optimize, $noDevMode);
 
         $console = new Console();
-        $console->build($context);
+        $console->dump($context);
     }
 }

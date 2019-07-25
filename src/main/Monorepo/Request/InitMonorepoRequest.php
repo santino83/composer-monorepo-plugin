@@ -9,7 +9,7 @@
 namespace Monorepo\Request;
 
 
-class InitiMonorepoRequest extends AbstractMonorepoRequest
+class InitMonorepoRequest extends AbstractMonorepoRequest
 {
 
     /**
@@ -27,7 +27,7 @@ class InitiMonorepoRequest extends AbstractMonorepoRequest
 
     /**
      * @param string $namespace
-     * @return InitiMonorepoRequest
+     * @return InitMonorepoRequest
      */
     public function setNamespace($namespace)
     {

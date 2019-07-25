@@ -20,7 +20,7 @@ use Monorepo\Loader\MonorepoLoader;
 use Monorepo\Model\Autoload;
 use Monorepo\Model\Monorepo;
 use Monorepo\Request\AddMonorepoRequest;
-use Monorepo\Request\InitiMonorepoRequest;
+use Monorepo\Request\InitMonorepoRequest;
 use Monorepo\Util\StringUtils;
 
 class Console
@@ -93,7 +93,7 @@ class Console
         $monorepo->setPath($monorepoPath)
             ->setNamespace(StringUtils::toPascal(basename(dirname($monorepoPath))));
 
-        if($context->getRequest() && $context->getRequest() instanceof InitiMonorepoRequest)
+        if($context->getRequest() && $context->getRequest() instanceof InitMonorepoRequest)
         {
             $monorepo->setNamespace($context->getRequest()->getNamespace());
         }
@@ -138,7 +138,7 @@ class Console
         $this->doUpdateMonorepo($monorepo, $composer);
 
         // update all monorepo subpackages
-        $this->build($context);
+        $this->dump($context);
     }
 
     /**
@@ -146,7 +146,7 @@ class Console
      *
      * @param Context $context
      */
-    public function build($context)
+    public function dump($context)
     {
         $io = $context->getIo();
 
@@ -243,7 +243,7 @@ class Console
 
         $io->write(sprintf('<info>Package %s generated</info>', $monorepo->getName()));
 
-        $this->build($context);
+        $this->dump($context);
     }
 
     /**

@@ -43,7 +43,7 @@ class ConsoleTest extends \PHPUnit_Framework_TestCase
         $context = ContextBuilder::create()->build($path);
 
         $console = new Console($this->loader);
-        $console->build($context);
+        $console->dump($context);
 
     }
 /*

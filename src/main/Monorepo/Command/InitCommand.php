@@ -12,7 +12,7 @@ namespace Monorepo\Command;
 use Composer\IO\ConsoleIO;
 use Monorepo\ContextBuilder;
 use Monorepo\Console;
-use Monorepo\Request\InitiMonorepoRequest;
+use Monorepo\Request\InitMonorepoRequest;
 use Monorepo\Util\StringUtils;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -67,7 +67,7 @@ class InitCommand extends BaseCommand
             $namespace = $this->getHelper('question')->ask($input, $output, $question);
         }
 
-        $request = new InitiMonorepoRequest();
+        $request = new InitMonorepoRequest();
         $request->setNamespace($namespace);
 
         $context = ContextBuilder::create()
