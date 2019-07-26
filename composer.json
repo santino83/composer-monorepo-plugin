@@ -17,7 +17,7 @@
         "psr-0": {"Monorepo\\": "src/main"}
     },
     "extra": {
-        "class": "Monorepo\\Composer\\Plugin",
+        "class": "Monorepo\\Composer\\Plugin\\MonorepoPlugin",
         "branch-alias": {
             "dev-master": "v1.0-dev"
         }

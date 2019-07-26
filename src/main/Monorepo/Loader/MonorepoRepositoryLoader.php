@@ -11,8 +11,8 @@ namespace Monorepo\Loader;
 
 use Composer\Package\Link;
 use Composer\Package\PackageInterface;
-use Monorepo\Composer\MonorepoInstalledRepository;
-use Monorepo\Composer\MonorepoPackage;
+use Monorepo\Composer\Repository\MonorepoInstalledRepository;
+use Monorepo\Composer\Package\MonorepoPackage;
 use Monorepo\Composer\Util\Filesystem;
 use Monorepo\Dependency\DependencyTree;
 use Monorepo\Exception\MissingDependencyException;

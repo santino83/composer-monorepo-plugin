@@ -1,6 +1,6 @@
 <?php
 
-namespace Monorepo\Composer;
+namespace Monorepo\Composer\Plugin;
 
 
 use Composer\Composer;
@@ -9,7 +9,7 @@ use Composer\Script\Event;
 use Monorepo\Console;
 use Monorepo\ContextBuilder;
 
-class PluginTest extends \PHPUnit_Framework_TestCase
+class MonorepoPluginTest extends \PHPUnit_Framework_TestCase
 {
     public function testOnPostAutoloadDump()
     {
@@ -26,7 +26,7 @@ class PluginTest extends \PHPUnit_Framework_TestCase
             [], // args
             ['optimize' => false] // flags
         );
-        $plugin = new Plugin($console);
+        $plugin = new MonorepoPlugin($console);
         $plugin->generateMonorepoAutoloads($event);
 
         $context = ContextBuilder::create()->build(getcwd(), false, true);

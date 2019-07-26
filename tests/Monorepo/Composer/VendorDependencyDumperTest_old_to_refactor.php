@@ -12,6 +12,8 @@ namespace Monorepo\Composer;
 use Composer\Installer\InstallationManager;
 use Composer\Package\Link;
 use Composer\Package\Package;
+use Monorepo\Composer\Autoload\AutoloadGenerator;
+use Monorepo\Composer\Repository\MonorepoInstalledRepository;
 use Monorepo\Composer\Util\Filesystem;
 use Monorepo\Loader\DependencyTreeLoader;
 use Monorepo\Loader\MonorepoLoader;

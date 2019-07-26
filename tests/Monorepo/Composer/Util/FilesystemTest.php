@@ -35,6 +35,11 @@ class FilesystemTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($exp3,$fs->path('a/b/c/','d'));
         $this->assertEquals($exp3,$fs->path('a/b/c','/d'));
         $this->assertEquals($exp3,$fs->path('a/b/c/','/d'));
+
+        $expected = 'a'.DIRECTORY_SEPARATOR;
+        $this->assertEquals($expected,$fs->path('a', DIRECTORY_SEPARATOR));
+        $this->assertEquals($expected,$fs->path('a/', DIRECTORY_SEPARATOR));
+
     }
 
 }

@@ -46,6 +46,10 @@
       "type": "string",
       "description": "the composer vendor dir (only for root monorepo)"
     },
+    "build-dir": {
+      "type": "string",
+      "description": "the monorepo build dir (only for root monorepo)"
+    },
     "namespace": {
       "type": "string",
       "description": "The global project base namespace (only for root monorepo)"

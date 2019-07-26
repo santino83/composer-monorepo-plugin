@@ -15,7 +15,7 @@ use Composer\IO\IOInterface;
 use Composer\Package\Version\VersionGuesser;
 use Composer\Util\ProcessExecutor;
 use Composer\Semver\VersionParser as SemverVersionParser;
-use Monorepo\Composer\AutoloadGenerator;
+use Monorepo\Composer\Autoload\AutoloadGenerator;
 use Monorepo\Composer\Util\Filesystem;
 use Monorepo\Request\RequestInterface;
 

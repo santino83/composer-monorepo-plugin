@@ -12,6 +12,8 @@ namespace Monorepo\Composer;
 use Composer\Config;
 use Composer\Installer\InstallationManager;
 use Composer\Package\PackageInterface;
+use Monorepo\Composer\Autoload\AutoloadGenerator;
+use Monorepo\Composer\Repository\MonorepoInstalledRepository;
 use Monorepo\Composer\Util\Filesystem;
 use Monorepo\Dependency\DependencyTree;
 use Monorepo\Loader\MonorepoRepositoryLoader;
@@ -77,14 +79,13 @@ class VendorDependencyDumper
      * @param bool $optimize
      * @param callable|null $cbk
      */
-    private function doDump($root, $rootRepository, $repositoryLoader, array $currentChildren, $dumpDevs = true, $optimize = false, $cbk = null )
+    private function doDump($root, $rootRepository, $repositoryLoader, array $currentChildren, $dumpDevs = true, $optimize = false, $cbk = null)
     {
-        foreach ($currentChildren as $monorepoName => $dependencyConfig)
-        {
+        foreach ($currentChildren as $monorepoName => $dependencyConfig) {
             $monorepo = $dependencyConfig['config'];
             /**@var $monorepo Monorepo */
 
-            if($cbk){
+            if ($cbk) {
                 $cbk($monorepo);
             }
 
@@ -107,7 +108,8 @@ class VendorDependencyDumper
     {
         $rootDir = dirname($root->getPath());
         $localDir = dirname($dependencyConfig['path']);
-        $binDir = $this->fs->path(dirname($monorepo->getPath()), 'vendor','bin');
+        $vendorDir = $monorepo->getVendorDir();
+        $binDir = $this->fs->path(dirname($monorepo->getPath()), $vendorDir, 'bin');
 
         $mainPackage = $rootRepository->findPackage($monorepo->getName(), "@stable");
 
@@ -115,7 +117,7 @@ class VendorDependencyDumper
 
         // create local composer autoload
         $composerConfig = new Config(true, $rootDir);
-        $composerConfig->merge(['config' => ['vendor-dir' => $this->fs->path($localDir, 'vendor')]]);
+        $composerConfig->merge(['config' => ['vendor-dir' => $this->fs->path($localDir, $vendorDir)]]);
 
         $this->autoloadGenerator->dump(
             $composerConfig,
@@ -126,12 +128,12 @@ class VendorDependencyDumper
             $optimize
         );
 
-        if(!is_dir($binDir)){
+        if (!is_dir($binDir)) {
             mkdir($binDir, 0755, true);
         }
 
         // remove old symlinks
-        array_map('unlink', glob($this->fs->path($binDir,'*')));
+        array_map('unlink', glob($this->fs->path($binDir, '*')));
 
         // add bins as symlinks
         foreach ($localRepo->getPackages() as $package) {
@@ -139,14 +141,14 @@ class VendorDependencyDumper
 
             foreach ($package->getBinaries() as $binary) {
 
-                $binFile = $this->fs->path($binDir , basename($binary));
+                $binFile = $this->fs->path($binDir, basename($binary));
 
                 if (file_exists($binFile)) {
-                     // TODO: 'Skipped installation of ' . $binFile . ' for package ' . $packageName . ': name conflicts with an existing file'
+                    // TODO: 'Skipped installation of ' . $binFile . ' for package ' . $packageName . ': name conflicts with an existing file'
                     continue;
                 }
 
-                $this->fs->relativeSymlink($this->fs->path($rootDir , $binary), $binFile);
+                $this->fs->relativeSymlink($this->fs->path($rootDir, $binary), $binFile);
             }
 
         }

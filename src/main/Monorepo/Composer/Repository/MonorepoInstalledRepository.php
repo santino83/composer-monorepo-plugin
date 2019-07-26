@@ -1,6 +1,6 @@
 <?php
 
-namespace Monorepo\Composer;
+namespace Monorepo\Composer\Repository;
 
 use Composer\Repository\InstalledRepositoryInterface;
 use Composer\Package\PackageInterface;

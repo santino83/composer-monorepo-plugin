@@ -1,11 +1,12 @@
 <?php
 
-namespace Monorepo\Composer;
+namespace Monorepo\Composer\Autoload;
 
 use Composer\Installer\InstallationManager;
 use Composer\Package\PackageInterface;
+use Composer\Autoload\AutoloadGenerator as BaseAutoloadGenerator;
 
-class AutoloadGenerator extends \Composer\Autoload\AutoloadGenerator
+class AutoloadGenerator extends BaseAutoloadGenerator
 {
     public function buildPackageMap(InstallationManager $installationManager, PackageInterface $mainPackage, array $packages)
     {

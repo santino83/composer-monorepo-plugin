@@ -16,6 +16,9 @@ class Monorepo
 
     const DEFAULT_PACKAGE_DIRS = ['packages','lib'];
     const DEFAULT_VENDOR_DIR = 'vendor';
+    const DEFAULT_BUILD_DIR = 'build';
+    const DEFAULT_TYPE = 'package';
+    const DEFAULT_ROOT_TYPE = 'monorepo-project';
 
     /**
      * @var string
@@ -75,7 +78,12 @@ class Monorepo
     /**
      * @var string
      */
-    private $vendorDir = 'vendor';
+    private $vendorDir;
+
+    /**
+     * @var string
+     */
+    private $buildDir;
 
     /**
      * @var string
@@ -86,6 +94,11 @@ class Monorepo
      * @var string
      */
     private $namespace;
+
+    /**
+     * @var string
+     */
+    private $type;
 
     /**
      * Monorepo constructor.
@@ -100,8 +113,29 @@ class Monorepo
         $this->requireDev = new Dependency();
         $this->autoload = new Autoload();
         $this->autoloadDev = new Autoload();
+        $this->type = $this->root ? self::DEFAULT_ROOT_TYPE : self::DEFAULT_TYPE;
         $this->packageDirs = self::DEFAULT_PACKAGE_DIRS;
+        $this->vendorDir = self::DEFAULT_VENDOR_DIR;
+        $this->buildDir = self::DEFAULT_BUILD_DIR;
         $this->namespace = $path ? StringUtils::toPascal(basename(dirname($path))): null;
+    }
+
+    /**
+     * @return string
+     */
+    public function getType()
+    {
+        return $this->type;
+    }
+
+    /**
+     * @param string $type
+     * @return Monorepo
+     */
+    public function setType($type)
+    {
+        $this->type = $type;
+        return $this;
     }
 
     /**
@@ -137,6 +171,24 @@ class Monorepo
     public function setVendorDir($vendorDir)
     {
         $this->vendorDir = $vendorDir;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getBuildDir()
+    {
+        return $this->buildDir;
+    }
+
+    /**
+     * @param string $buildDir
+     * @return Monorepo
+     */
+    public function setBuildDir($buildDir)
+    {
+        $this->buildDir = $buildDir;
         return $this;
     }
 
@@ -404,6 +456,10 @@ class Monorepo
             $repo['bin'] = $this->bin;
         }
 
+        if(!$this->root && $this->type && $this->type !== self::DEFAULT_TYPE){
+            $repo['type'] = $this->type;
+        }
+
         if(!$this->root){
             return $repo;
         }
@@ -414,6 +470,10 @@ class Monorepo
 
         if($this->vendorDir && $this->vendorDir !== self::DEFAULT_VENDOR_DIR) {
             $repo['vendor-dir'] = $this->vendorDir;
+        }
+
+        if($this->buildDir && $this->buildDir !== self::DEFAULT_BUILD_DIR){
+            $repo['build-dir'] = $this->buildDir;
         }
 
         if($this->packageDirs && count(array_diff($this->packageDirs, self::DEFAULT_PACKAGE_DIRS)) !== 0){
@@ -468,12 +528,17 @@ class Monorepo
             }
 
             $this->namespace = $other->namespace ? $other->namespace : $this->namespace;
+
+            $this->vendorDir = $other->getVendorDir();
+            $this->buildDir = $other->getBuildDir();
         }
 
-        $this->vendorDir = $other->getVendorDir();
+        if(!$this->root && !$other->isRoot()){
+            $this->type = $other->getType();
+        }
 
-        $this->autoload = Autoload::fromArray($other->getAutoload()->toArray());
-        $this->autoloadDev = Autoload::fromArray($other->getAutoloadDev()->toArray());
+        $this->autoload = Autoload::fromArray(array_merge_recursive($this->autoload->toArray(), $other->getAutoload()->toArray()));
+        $this->autoloadDev = Autoload::fromArray(array_merge_recursive($this->autoloadDev->toArray(), $other->getAutoloadDev()->toArray()));
     }
 
 }

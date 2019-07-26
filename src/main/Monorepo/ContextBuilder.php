@@ -19,8 +19,8 @@ use Composer\Package\Version\VersionGuesser;
 use Composer\Package\Version\VersionParser;
 use Composer\Util\ProcessExecutor;
 use Composer\Semver\VersionParser as SemverVersionParser;
-use Monorepo\Composer\AutoloadGenerator;
-use Monorepo\Composer\MonorepoInstaller;
+use Monorepo\Composer\Autoload\AutoloadGenerator;
+use Monorepo\Composer\Installer\MonorepoInstaller;
 use Monorepo\Loader\ComposerLoader;
 use Monorepo\Request\RequestInterface;
 
@@ -247,7 +247,7 @@ class ContextBuilder
             ->setComposerConfig($this->getComposerConfig())
             ->setProcessExecutor($this->getProcessExecutor())
             ->setVersionParser($this->getVersionParser())
-            ->setVersionGuesser($this->versionGuesser);
+            ->setVersionGuesser($this->getVersionGuesser());
 
         $context->getGenerator()->setDevMode(!$context->isNoDevMode());
 

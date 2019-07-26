@@ -1,6 +1,6 @@
 <?php
 
-namespace Monorepo\Composer;
+namespace Monorepo\Composer\Plugin;
 
 
 use Composer\Composer;
@@ -10,10 +10,11 @@ use Composer\Script\Event;
 use Composer\EventDispatcher\EventSubscriberInterface;
 use Composer\Plugin\Capable;
 use Composer\Plugin\Capability\CommandProvider;
+use Monorepo\Composer\Plugin\Capability\MonorepoCommandProvider;
 use Monorepo\Console;
 use Monorepo\ContextBuilder;
 
-class Plugin implements PluginInterface, EventSubscriberInterface, Capable
+class MonorepoPlugin implements PluginInterface, EventSubscriberInterface, Capable
 {
 
     /**
@@ -27,7 +28,7 @@ class Plugin implements PluginInterface, EventSubscriberInterface, Capable
     private $io;
 
     /**
-     * Plugin constructor.
+     * MonorepoPlugin constructor.
      * @param Console|null $console
      */
     public function __construct(Console $console = null)
@@ -65,6 +66,6 @@ class Plugin implements PluginInterface, EventSubscriberInterface, Capable
 
     public function getCapabilities()
     {
-        return [CommandProvider::class => MonorepoCommands::class];
+        return [CommandProvider::class => MonorepoCommandProvider::class];
     }
 }

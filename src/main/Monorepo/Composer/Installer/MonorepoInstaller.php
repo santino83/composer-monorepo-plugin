@@ -1,10 +1,11 @@
 <?php
 
-namespace Monorepo\Composer;
+namespace Monorepo\Composer\Installer;
 
 use Composer\Installer\InstallerInterface;
 use Composer\Package\PackageInterface;
 use Composer\Repository\InstalledRepositoryInterface;
+use Monorepo\Composer\Package\MonorepoPackage;
 
 class MonorepoInstaller implements InstallerInterface
 {

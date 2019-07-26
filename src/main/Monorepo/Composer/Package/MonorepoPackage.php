@@ -6,7 +6,7 @@
  * Time: 23.38
  */
 
-namespace Monorepo\Composer;
+namespace Monorepo\Composer\Package;
 
 use Composer\Package\Package as BasePackage;
 

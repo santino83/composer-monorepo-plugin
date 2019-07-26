@@ -27,7 +27,7 @@ abstract class AbstractMonorepoRequest implements RequestInterface
         if(!$this->requestName) {
             $rclass = new \ReflectionClass($this);
             $simpleName = $rclass->getShortName();
-            $this->requestName = 'monorepo:'.StringUtils::toLower(substr($simpleName,0, strlen($simpleName) - 15));
+            $this->requestName = 'monorepo:'.StringUtils::toKebab(substr($simpleName,0, strlen($simpleName) - 15));
         }
 
         return $this->requestName;

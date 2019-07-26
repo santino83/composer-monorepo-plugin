@@ -113,15 +113,23 @@ class MonorepoLoader
             ->setAutoloadDev(Autoload::fromArray($raw['autoload-dev']))
             ->setAutoload(Autoload::fromArray($raw['autoload']));
 
+        if(!$raw['root'] && $raw['type']){
+            $mr->setType($raw['type']);
+        }
+
         if($raw['vendor-dir']){
             $mr->setVendorDir($raw['vendor-dir']);
         }
 
-        if($raw['package-dirs']){
-            $mr->setPackageDirs($raw['package-dirs']);
-        }
-
         if($mr->isRoot()){
+
+            if($raw['package-dirs']){
+                $mr->setPackageDirs($raw['package-dirs']);
+            }
+
+            if($raw['build-dir']){
+                $mr->setBuildDir($raw['build-dir']);
+            }
 
             if($raw['namespace']){
                 $mr->setNamespace($raw['namespace']);
@@ -141,6 +149,8 @@ class MonorepoLoader
     }
 
     /**
+     * TODO: change method visibility to protected and refactory (usage and tests)
+     *
      * @param string $file full path to monorepo.json file
      * @return array
      * @throws \RuntimeException on errors
@@ -156,6 +166,8 @@ class MonorepoLoader
     }
 
     /**
+     * TODO: change method visibility to protected and refactory (usage and tests)
+     *
      * @param string $json the content of monorepo.json
      * @return array
      * @throws \RuntimeException on errors
@@ -176,6 +188,8 @@ class MonorepoLoader
             return array_merge([
                 'name' => '',
                 'vendor-dir' => '',
+                'build-dir' => '',
+                'type' => '',
                 'root' => false,
                 'require' => [],
                 'require-dev' => [],
@@ -189,14 +203,6 @@ class MonorepoLoader
                 'namespace' => null
             ],$monorepoJson);
         }
-    }
-
-    /**
-     * @return SchemaValidator
-     */
-    public function getValidator()
-    {
-        return $this->validator;
     }
 
 }
