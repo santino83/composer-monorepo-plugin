@@ -28,11 +28,25 @@
         "description": "package names with their unique relative path in the project (only for sub-package monorepo)"
       }
     },
+    "common-deps": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "description": "common dependencies added on creating a new sub-monorepo (only for root monorepo)"
+      }
+    },
     "deps-dev": {
       "type": "array",
       "items": {
         "type": "string",
         "description": "development package names with their unique relative path in the project (only for sub-package monorepo)"
+      }
+    },
+    "common-deps-dev": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "description": "common dev dependencies added on creating a new sub-monorepo (only for root monorepo)"
       }
     },
     "package-dirs": {

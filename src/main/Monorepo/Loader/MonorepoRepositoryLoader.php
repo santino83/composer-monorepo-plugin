@@ -99,9 +99,8 @@ class MonorepoRepositoryLoader
      */
     private function appendPackage($package, $localRepo, $rootRepo)
     {
-        if(!$package){
-            // TODO: when package is null, do nothing. Maybe could it done better, eg: no call this method
-            // when $package is null
+        if(!$package || $localRepo->hasPackage($package)){
+            // null packages or already added packages skip
             return;
         }
 

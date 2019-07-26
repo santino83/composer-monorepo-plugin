@@ -105,6 +105,8 @@ class AddCommand extends BaseCommand
 
         $this->askForDependencies($request, $root, $input, $output);
 
+        $this->addCommonsDeps($request, $root);
+
         if($this->confirmGenerate($request, $input, $output))
         {
             $this->doExecute($context, $request);
@@ -135,6 +137,8 @@ class AddCommand extends BaseCommand
 
         $this->checkExistance($request);
 
+        $this->addCommonsDeps($request, $root);
+
         $this->doExecute($context, $request);
     }
 
@@ -164,6 +168,25 @@ class AddCommand extends BaseCommand
         }
 
         return true;
+    }
+
+    /**
+     * @param AddMonorepoRequest $request
+     * @param Monorepo $root
+     */
+    private function addCommonsDeps(AddMonorepoRequest $request, Monorepo $root)
+    {
+        $commonDeps = $root->getCommonDeps();
+        $commonDepsDev = $root->getCommonDepsDev();
+
+        $deps = $request->getDeps();
+        $depsDev = $request->getDepsDev();
+
+        $fDeps = array_merge(array_diff($commonDeps, $deps), $deps);
+        $fDepsDev = array_merge(array_diff($commonDepsDev, $depsDev), $depsDev);
+
+        $request->setDeps($fDeps);
+        $request->setDepsDev($fDepsDev);
     }
 
     /**

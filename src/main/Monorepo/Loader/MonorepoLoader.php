@@ -73,7 +73,20 @@ class MonorepoLoader
                 $mr->getRequireDev()[$packageName] = $config->getPrettyConstraint();
             }
 
-            $mr->setRepositories($package->getRepositories());
+            $repositories = [];
+            foreach($package->getRepositories() as $key => $config){
+                if(is_numeric($key) || $key !== 'packagist.org'){
+                    $repositories[] = $config;
+                }
+
+                if($config === false){
+                    $repositories[] = ['packagist.org' => false];
+                }else{
+                    continue;
+                }
+            }
+
+            $mr->setRepositories($repositories);
 
         }else{
 
@@ -132,6 +145,14 @@ class MonorepoLoader
 
             if($raw['repositories']){
                 $mr->setRepositories($raw['repositories']);
+            }
+
+            if($raw['common-deps']){
+                $mr->setCommonDeps($raw['common-deps']);
+            }
+
+            if($raw['common-deps-dev']){
+                $mr->setCommonDepsDev($raw['common-deps-dev']);
             }
 
             foreach($raw['require'] as $packageName => $packageVersion){
@@ -212,6 +233,8 @@ class MonorepoLoader
                 'exclude' => [],
                 'package-vcs' => [],
                 'repositories' => [],
+                'common-deps' => [],
+                'common-deps-dev' =>  [],
                 'namespace' => null
             ],$monorepoJson);
         }

@@ -212,6 +212,13 @@ class DependencyTree
                 return 0;
             }
 
+            // circular dependencies check
+            if(in_array($ka, $vb) && in_array($kb, $va)){
+                throw new \RuntimeException(
+                    sprintf('Circular dependencies found: %s and %s depends each others', $ka, $kb)
+                );
+            }
+
             if(in_array($ka, $vb)){
                 //b depends on a, before a
                 return -1;
@@ -221,8 +228,6 @@ class DependencyTree
                 //a depends on b, before b
                 return 1;
             }
-
-            // TODO: circular dependencies detection??
 
             if(!$va && $vb){
                 //a has no dependencies instead of b, before a

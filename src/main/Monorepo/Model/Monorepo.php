@@ -118,6 +118,16 @@ class Monorepo
     private $repositories = [];
 
     /**
+     * @var array|string[]
+     */
+    private $commonDeps = [];
+
+    /**
+     * @var array|string[]
+     */
+    private $commonDepsDev = [];
+
+    /**
      * Monorepo constructor.
      * @param bool $root
      * @param string $path
@@ -135,6 +145,42 @@ class Monorepo
         $this->vendorDir = self::DEFAULT_VENDOR_DIR;
         $this->buildDir = self::DEFAULT_BUILD_DIR;
         $this->namespace = $path ? StringUtils::toPascal(basename(dirname($path))): null;
+    }
+
+    /**
+     * @return array|string[]
+     */
+    public function getCommonDeps()
+    {
+        return $this->commonDeps;
+    }
+
+    /**
+     * @param array|string[] $commonDeps
+     * @return Monorepo
+     */
+    public function setCommonDeps($commonDeps)
+    {
+        $this->commonDeps = $commonDeps;
+        return $this;
+    }
+
+    /**
+     * @return array|string[]
+     */
+    public function getCommonDepsDev()
+    {
+        return $this->commonDepsDev;
+    }
+
+    /**
+     * @param array|string[] $commonDepsDev
+     * @return Monorepo
+     */
+    public function setCommonDepsDev($commonDepsDev)
+    {
+        $this->commonDepsDev = $commonDepsDev;
+        return $this;
     }
 
     /**
@@ -543,6 +589,14 @@ class Monorepo
             return $repo;
         }
 
+        if($this->commonDeps){
+            $repo['common-deps'] = $this->commonDeps;
+        }
+
+        if($this->commonDepsDev){
+            $repo['common-deps-dev'] = $this->commonDepsDev;
+        }
+
         if($this->namespace){
             $repo['namespace'] = $this->namespace;
         }
@@ -601,6 +655,9 @@ class Monorepo
             $this->buildDir = $other->getBuildDir();
 
             $this->repositories = $other->getRepositories();
+
+            $this->commonDepsDev = array_merge(array_diff($other->getCommonDepsDev(), $this->commonDepsDev), $this->commonDepsDev);
+            $this->commonDeps = array_merge(array_diff($other->getCommonDeps(), $this->commonDeps), $this->commonDeps);
         }
 
         if(!$this->root && !$other->isRoot()){
