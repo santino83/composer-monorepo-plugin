@@ -34,7 +34,7 @@ class MonorepoComposerDumper
             $jsonComposer->write($rawComposer);
             $jsonComposer->validateSchema();
 
-            if(!$jsonComposer->exists()){
+            if (!$jsonComposer->exists()) {
                 throw new \RuntimeException('Unable to create json file.');
             }
 
@@ -83,14 +83,14 @@ class MonorepoComposerDumper
             $raw['require-dev'] = $this->getRequired($monorepo->getDepsDev(), $allRequires, $version);
         }
 
-        $excludeRootKeys = ['name', 'type', 'version', 'require', 'require-dev', 'autoload', 'autoload-dev', 'include-path', 'bin', 'vendor-dir'];
+        $excludeRootKeys = ['name', 'type', 'version', 'require', 'require-dev', 'autoload', 'autoload-dev', 'include-path', 'bin', 'vendor-dir', 'archive'];
         $usedRootKeys = array_diff(array_keys($rootComposer), $excludeRootKeys);
 
         foreach ($usedRootKeys as $rootKey) {
             $raw[$rootKey] = $rootComposer[$rootKey];
         }
 
-        if(!isset($raw['description'])){
+        if (!isset($raw['description'])) {
             $raw['description'] = '';
         }
 
@@ -100,6 +100,10 @@ class MonorepoComposerDumper
 
         if ($monorepo->getBin()) {
             $raw['bin'] = $monorepo->getBin();
+        }
+
+        if ($monorepo->getExclude()) {
+            $raw['archive'] = ['exclude' => $monorepo->getExclude()];
         }
 
         return $raw;

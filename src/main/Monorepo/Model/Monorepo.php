@@ -101,6 +101,23 @@ class Monorepo
     private $type;
 
     /**
+     * @var array|string[]
+     */
+    private $exclude = [];
+
+    /**
+     * VCS repository configuration
+     * @var array
+     */
+    private $packageVcs = [];
+
+    /**
+     * a repository configuration or an array of repository configurations
+     * @var array
+     */
+    private $repositories = [];
+
+    /**
      * Monorepo constructor.
      * @param bool $root
      * @param string $path
@@ -118,6 +135,60 @@ class Monorepo
         $this->vendorDir = self::DEFAULT_VENDOR_DIR;
         $this->buildDir = self::DEFAULT_BUILD_DIR;
         $this->namespace = $path ? StringUtils::toPascal(basename(dirname($path))): null;
+    }
+
+    /**
+     * @return array
+     */
+    public function getPackageVcs()
+    {
+        return $this->packageVcs;
+    }
+
+    /**
+     * @param array $packageVcs
+     * @return Monorepo
+     */
+    public function setPackageVcs($packageVcs)
+    {
+        $this->packageVcs = $packageVcs;
+        return $this;
+    }
+
+    /**
+     * @return array
+     */
+    public function getRepositories()
+    {
+        return $this->repositories;
+    }
+
+    /**
+     * @param array $repositories
+     * @return Monorepo
+     */
+    public function setRepositories($repositories)
+    {
+        $this->repositories = $repositories;
+        return $this;
+    }
+
+    /**
+     * @return array|string[]
+     */
+    public function getExclude()
+    {
+        return $this->exclude;
+    }
+
+    /**
+     * @param array|string[] $exclude
+     * @return Monorepo
+     */
+    public function setExclude($exclude)
+    {
+        $this->exclude = $exclude;
+        return $this;
     }
 
     /**
@@ -440,11 +511,11 @@ class Monorepo
             $repo['autoload-dev'] = $this->autoloadDev->isEmpty();
         }
 
-        if($this->deps){
+        if(!$this->root && $this->deps){
             $repo['deps'] = $this->deps;
         }
 
-        if($this->depsDev){
+        if(!$this->root && $this->depsDev){
             $repo['deps-dev'] = $this->depsDev;
         }
 
@@ -458,6 +529,14 @@ class Monorepo
 
         if(!$this->root && $this->type && $this->type !== self::DEFAULT_TYPE){
             $repo['type'] = $this->type;
+        }
+
+        if($this->exclude){
+            $repo['exclude'] = $this->exclude;
+        }
+
+        if(!$this->root && $this->packageVcs){
+            $repo['package-vcs'] = $this->packageVcs;
         }
 
         if(!$this->root){
@@ -480,6 +559,10 @@ class Monorepo
             $repo['package-dirs'] = $this->packageDirs;
         }
 
+        if($this->repositories){
+            $repo['repositories'] = $this->repositories;
+        }
+
         if (count($this->require)) {
             $this->require->ksort();
             $repo['require'] = $this->require->getArrayCopy();
@@ -499,21 +582,6 @@ class Monorepo
      */
     public function merge($other)
     {
-        foreach(array_diff($other->getDeps(), $this->deps) as $dep){
-            $this->deps[] = $dep;
-        }
-
-        foreach (array_diff($other->getDepsDev(), $this->depsDev) as $dep){
-            $this->depsDev[] = $dep;
-        }
-
-        foreach(array_diff($other->getIncludePath(), $this->includePath) as $path){
-            $this->includePath[] = $path;
-        }
-
-        foreach(array_diff($other->getBin(), $this->bin) as $path){
-            $this->bin[] = $path;
-        }
 
         if($this->root && $other->isRoot()){
             $this->requireDev = new Dependency();
@@ -531,11 +599,23 @@ class Monorepo
 
             $this->vendorDir = $other->getVendorDir();
             $this->buildDir = $other->getBuildDir();
+
+            $this->repositories = $other->getRepositories();
         }
 
         if(!$this->root && !$other->isRoot()){
+
             $this->type = $other->getType();
         }
+
+        $this->deps = array_merge(array_diff($other->getDeps(), $this->deps), $this->deps);
+        $this->depsDev = array_merge(array_diff($other->getDepsDev(), $this->depsDev), $this->depsDev);
+
+        $this->packageVcs = $other->getPackageVcs() ? $other->getPackageVcs() : $this->packageVcs;
+
+        $this->includePath = array_merge(array_diff($other->getIncludePath(), $this->includePath), $this->includePath);
+        $this->bin = array_merge(array_diff($other->getBin(), $this->bin), $this->bin);
+        $this->exclude = array_merge(array_diff($other->getExclude(), $this->exclude), $this->exclude);
 
         $this->autoload = Autoload::fromArray(array_merge_recursive($this->autoload->toArray(), $other->getAutoload()->toArray()));
         $this->autoloadDev = Autoload::fromArray(array_merge_recursive($this->autoloadDev->toArray(), $other->getAutoloadDev()->toArray()));

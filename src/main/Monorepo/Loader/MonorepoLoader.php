@@ -62,6 +62,7 @@ class MonorepoLoader
             ->setVendorDir($composer->getConfig()->get('vendor-dir', Config::RELATIVE_PATHS));
 
         if($root) {
+
             // load require
             foreach ($package->getRequires() as $packageName => $config) {
                 $mr->getRequire()[$packageName] = $config->getPrettyConstraint();
@@ -71,27 +72,24 @@ class MonorepoLoader
             foreach ($package->getDevRequires() as $packageName => $config) {
                 $mr->getRequireDev()[$packageName] = $config->getPrettyConstraint();
             }
+
+            $mr->setRepositories($package->getRepositories());
+
         }else{
+
             // load deps
-            $deps = [];
-            foreach ($package->getRequires() as $packageName => $config) {
-                $deps[] = $packageName;
-            }
-            $mr->setDeps($deps);
+            $mr->setDeps(array_keys($package->getRequires()));
 
             // load deps-dev
-            $depsDev = [];
-            foreach ($package->getDevRequires() as $packageName => $config) {
-                $depsDev[] = $packageName;
-            }
-            $mr->setDepsDev($depsDev);
+            $mr->setDepsDev(array_keys($package->getDevRequires()));
         }
 
         // load autoload/dev-autoload/include-path/bin
         $mr->setAutoload(Autoload::fromArray($package->getAutoload()))
             ->setAutoloadDev(Autoload::fromArray($package->getDevAutoload()))
             ->setIncludePath($package->getIncludePaths())
-            ->setBin($package->getBinaries());
+            ->setBin($package->getBinaries())
+            ->setExclude($package->getArchiveExcludes());
 
         return $mr;
     }
@@ -111,11 +109,8 @@ class MonorepoLoader
             ->setIncludePath($raw['include-path'])
             ->setName($raw['name'])
             ->setAutoloadDev(Autoload::fromArray($raw['autoload-dev']))
-            ->setAutoload(Autoload::fromArray($raw['autoload']));
-
-        if(!$raw['root'] && $raw['type']){
-            $mr->setType($raw['type']);
-        }
+            ->setAutoload(Autoload::fromArray($raw['autoload']))
+            ->setExclude($raw['exclude']);
 
         if($raw['vendor-dir']){
             $mr->setVendorDir($raw['vendor-dir']);
@@ -135,12 +130,26 @@ class MonorepoLoader
                 $mr->setNamespace($raw['namespace']);
             }
 
+            if($raw['repositories']){
+                $mr->setRepositories($raw['repositories']);
+            }
+
             foreach($raw['require'] as $packageName => $packageVersion){
                 $mr->getRequire()[$packageName] = $packageVersion;
             }
 
             foreach($raw['require-dev'] as $packageName => $packageVersion){
                 $mr->getRequireDev()[$packageName] = $packageVersion;
+            }
+
+        }else{
+
+            if($raw['type']){
+                $mr->setType($raw['type']);
+            }
+
+            if($raw['package-vcs']){
+                $mr->setPackageVcs($raw['package-vcs']);
             }
 
         }
@@ -200,6 +209,9 @@ class MonorepoLoader
                 'include-path' => [],
                 'bin' => [],
                 'package-dirs' => [],
+                'exclude' => [],
+                'package-vcs' => [],
+                'repositories' => [],
                 'namespace' => null
             ],$monorepoJson);
         }

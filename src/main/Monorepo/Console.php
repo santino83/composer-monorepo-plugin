@@ -203,8 +203,14 @@ class Console
         $builder = new MonorepoComposerBuilder($this->fs);
 
         foreach($packages as $package){
+
+            $monorepo = $dependencyTree->get($package);
+            if($monorepo->isRoot()){
+                continue;
+            }
+
             $io->write('<info>Building package </info>'.$package.' <info>...</info>');
-            $builder->build($dependencyTree->get($package), $rootMonorepo, $buildDir, $request->getVersion());
+            $builder->build($monorepo, $rootMonorepo, $buildDir, $request->getVersion());
         }
 
         $io->write('<info>Done!</info>');

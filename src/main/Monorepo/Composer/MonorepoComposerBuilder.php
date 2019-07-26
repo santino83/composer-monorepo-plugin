@@ -51,14 +51,8 @@ class MonorepoComposerBuilder
         $finalMonorepo->setPath($this->fs->path($finalPath,'monorepo.json'));
         $sourcePath = realpath(dirname($monorepo->getPath()));
 
-        $excludes = ['**/'.$finalMonorepo->getVendorDir(),'**/monorepo.json'];
-
-        if($monorepo->isRoot()){
-            $excludes[] = '/'.$monorepo->getBuildDir();
-        }
-
         $this->fs->removeDirectory($finalPath);
-        if(!$this->cloneContents($sourcePath, $finalPath, $excludes)){
+        if(!$this->cloneContents($sourcePath, $finalPath, $finalMonorepo->getExclude())){
             $this->fs->removeDirectory($finalPath);
             throw new \RuntimeException(sprintf('Unable to copy %s to %s', $sourcePath, $finalPath));
         }
@@ -82,10 +76,6 @@ class MonorepoComposerBuilder
      */
     private function cloneContents($source, $target, array $excludes = [])
     {
-        if (!is_dir($source)) {
-            return copy($source, $target);
-        }
-
         $this->fs->ensureDirectoryExists($target);
 
         $result = true;
@@ -118,12 +108,18 @@ class MonorepoComposerBuilder
             ->setType($source->getType())
             ->merge($root);
 
-        // should be unusefull because root monorepos shouldn't have deps/depsDev entries
-        $monorepo
-            ->setDepsDev([])
-            ->setDeps([]);
-
         $monorepo->merge($source);
+
+        $excludes = array_merge(
+            ['**/'.$monorepo->getVendorDir(),'**/monorepo.json'],
+            $monorepo->getExclude()
+        );
+
+        if($source->isRoot()){
+            $excludes[] = '/'.$source->getBuildDir();
+        }
+
+        $monorepo->setExclude(array_unique($excludes));
 
         return $monorepo;
     }
