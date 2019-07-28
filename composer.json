@@ -5,7 +5,9 @@
     "require": {
         "composer-plugin-api": "^1.0",
         "jawira/case-converter": "^3.0",
-        "ext-json": "^1.6"
+        "ext-json": "^1.6",
+        "knplabs/github-api": "^2.11",
+        "php-http/guzzle6-adapter": "^1.1"
     },
     "require-dev": {
         "php": "^5.5|^7.0",

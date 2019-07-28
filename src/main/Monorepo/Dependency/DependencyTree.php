@@ -159,12 +159,14 @@ class DependencyTree
     }
 
     /**
+     * @param bool $excludeRoot
      * @return array|string[]
      */
-    public function getMonorepos()
+    public function getMonorepos($excludeRoot = false)
     {
         $this->ensureBuilt();
-        return array_keys($this->monorepos);
+        $names = array_keys($this->monorepos);
+        return $excludeRoot ? array_diff($names, [$this->root]) : $names;
     }
 
     /**

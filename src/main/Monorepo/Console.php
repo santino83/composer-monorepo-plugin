@@ -15,6 +15,7 @@ use Composer\Json\JsonFile;
 use Monorepo\Composer\MonorepoComposerBuilder;
 use Monorepo\Composer\Util\Filesystem;
 use Monorepo\Composer\VendorDependencyDumper;
+use Monorepo\Dependency\DependencyTree;
 use Monorepo\Exception\MissingDependencyException;
 use Monorepo\Loader\ComposerLoader;
 use Monorepo\Loader\DependencyTreeLoader;
@@ -24,6 +25,8 @@ use Monorepo\Model\Monorepo;
 use Monorepo\Request\AddMonorepoRequest;
 use Monorepo\Request\BuildMonorepoRequest;
 use Monorepo\Request\InitMonorepoRequest;
+use Monorepo\Request\TestMonorepoRequest;
+use Monorepo\Runner\TestRunner;
 use Monorepo\Util\StringUtils;
 
 class Console
@@ -118,8 +121,6 @@ class Console
      */
     public function dump($context)
     {
-        $io = $context->getIo();
-
         $rootDir = $context->getRootDirectory();
         $rootMonorepoPath = $this->getRootMonorepoPath($rootDir);
 
@@ -128,32 +129,10 @@ class Console
             return;
         }
 
-        $io->write(sprintf('<info>Generating autoload files for monorepo sub-packages %s dev-dependencies.</info>', $context->isNoDevMode() ? 'without' : 'with'));
-
-        $start = microtime(true);
-
         $rootMonorepo = $this->loadMonorepo($rootMonorepoPath);
         $dependencyTree = $this->dependencyTreeLoader->load($rootMonorepo, !$context->isNoDevMode());
 
-        $vendorDump = new VendorDependencyDumper($context->getGenerator(), $context->getInstallationManager(), $this->fs);
-
-        try {
-            $vendorDump->dump($dependencyTree, $context->isOptimize(), function ($processedMonorepo) use ($io) {
-                /**@var $processedMonorepo Monorepo */
-                $io->write(sprintf(' [Subpackage] <comment>%s</comment>', $processedMonorepo->getName()));
-            });
-        } catch (MissingDependencyException $ex) {
-
-            $io->write(sprintf('<error>%s</error>', $ex->getMessage()));
-
-            foreach ($ex->getOrphaned() as $packageName => $deps) {
-                $io->write(sprintf('<info>%s</info> missing dependencies: <error>%s</error>', $packageName, implode(',', (array)$deps)));
-            }
-        }
-
-        $duration = microtime(true) - $start;
-
-        $io->write(sprintf('Monorepo subpackage autoloads generated in <comment>%0.2f</comment> seconds.', $duration));
+        $this->doDump($dependencyTree, $context);
     }
 
     /**
@@ -306,6 +285,67 @@ class Console
     }
 
     /**
+     * Tests monorepo packages
+     *
+     * @param Context $context
+     */
+    public function test($context)
+    {
+        $io = $context->getIo();
+
+        $rootDir = $context->getRootDirectory();
+        $rootMonorepoPath = $this->getRootMonorepoPath($rootDir);
+
+        if (!$this->isMonorepoInitialized($rootMonorepoPath)) {
+            // do nothing if project is not initialized
+            return;
+        }
+
+        $request = $context->getRequest();
+        /**@var $request TestMonorepoRequest */
+
+        if (!$request || !($request instanceof TestMonorepoRequest)) {
+            throw new \RuntimeException('Invalid input');
+        }
+
+        $rootMonorepo = $this->loadMonorepo($rootMonorepoPath);
+
+        $message = $request->isTestAll() ? '<info>Executes all tests in the current project</info>' :
+            sprintf('<info>Executes all tests for package</info> %s', $request->getPackage());
+
+        $io->write($message);
+
+        $dependencyTree = $this->dependencyTreeLoader->load($rootMonorepo, true);
+
+        if(!$request->isTestAll() && !$dependencyTree->has($request->getPackage())){
+            throw new \RuntimeException(sprintf('Package %s doesn\'t exist', $request->getPackage()));
+        }
+
+        if($request->isDumpAutoloaders()){
+            if(!$this->doDump($dependencyTree, $context)){
+                return;
+            }
+        }
+
+        $targets = [];
+
+        if($request->isTestAll())
+        {
+            foreach($dependencyTree->getMonorepos(true) as $name){
+                $targets[] = $dependencyTree->get($name);
+            }
+        }else{
+            $targets[] = $dependencyTree->get($request->getPackage());
+        }
+
+        $runner = new TestRunner($io);
+
+        $runner->run($targets, $rootMonorepo->getVendorDir());
+
+        $io->write('<info>Done!</info>');
+    }
+
+    /**
      * @param Context $context
      * @return string|null
      */
@@ -342,6 +382,43 @@ class Console
         }
 
         return $this->loadMonorepo($rootMonorepoPath);
+    }
+
+    /**
+     * @param DependencyTree $dependencyTree
+     * @param Context $context
+     * @return bool
+     */
+    protected function doDump(DependencyTree $dependencyTree, Context $context)
+    {
+        $io = $context->getIo();
+        $io->write(sprintf('<info>Generating autoload files for monorepo sub-packages %s dev-dependencies.</info>', $context->isNoDevMode() ? 'without' : 'with'));
+
+        $start = microtime(true);
+
+        $vendorDump = new VendorDependencyDumper($context->getGenerator(), $context->getInstallationManager(), $this->fs);
+
+        try {
+            $vendorDump->dump($dependencyTree, $context->isOptimize(), function ($processedMonorepo) use ($io) {
+                /**@var $processedMonorepo Monorepo */
+                $io->write(sprintf(' [Subpackage] <comment>%s</comment>', $processedMonorepo->getName()));
+            });
+        } catch (MissingDependencyException $ex) {
+
+            $io->write(sprintf('<error>%s</error>', $ex->getMessage()));
+
+            foreach ($ex->getOrphaned() as $packageName => $deps) {
+                $io->write(sprintf('<info>%s</info> missing dependencies: <error>%s</error>', $packageName, implode(',', (array)$deps)));
+            }
+
+            return false;
+        }
+
+        $duration = microtime(true) - $start;
+
+        $io->write(sprintf('Monorepo subpackage autoloads generated in <comment>%0.2f</comment> seconds.', $duration));
+
+        return true;
     }
 
     /**
